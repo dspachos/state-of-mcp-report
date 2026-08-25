@@ -2,7 +2,9 @@
 
 **A source-verified white paper · August 2026**
 
-[![Download the white paper (PDF)](https://img.shields.io/badge/Download-white_paper_PDF-1B365D?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](https://github.com/dspachos/state-of-mcp-report/raw/main/state-of-mcp-whitepaper.pdf)
+[![Read the white paper (PDF)](https://img.shields.io/badge/Read-white_paper_PDF-1B365D?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](https://github.com/dspachos/state-of-mcp-report/blob/main/state-of-mcp-whitepaper.pdf)
+
+**[Direct download (raw PDF, 716 KB)](https://raw.githubusercontent.com/dspachos/state-of-mcp-report/main/state-of-mcp-whitepaper.pdf)** — or use the *Download raw file* button on the viewer page.
 
 **25 pages · two-column · 4 figures · 123 cited sources** — every URL fetched and checked on 2026-08-25.
 
