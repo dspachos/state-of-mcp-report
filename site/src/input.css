@@ -1,0 +1,208 @@
+/* State of MCP report site — Tailwind directives + Tokyo Night tokens + a few
+   hand-rolled components (pi-pocket aesthetic: square shapes, thin borders,
+   JetBrains Mono, cyan→green active gradient). */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #13141c;
+  --panel: #16161e;
+  --card: #1a1b26;
+  --card-2: #1f2335;
+  --raised: #24283b;
+  --line: #292e42;
+  --line-strong: #3b4261;
+  --text: #c0caf5;
+  --body: #a9b1d6;
+  --muted: #7a82ad;
+  --accent: #7aa2f7;
+  --accent-ink: #0e0e14;
+  --accent-soft: rgba(122, 162, 247, 0.12);
+  --brand: #ff9e64;
+  --ok: #9ece6a;
+  --ok-soft: rgba(158, 206, 106, 0.1);
+  --warn: #e0af68;
+  --err: #f7768e;
+  --purple: #bb9af7;
+  --code-bg: #0e0e14;
+  --active: linear-gradient(45deg, #33ccff, #00ff99);
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-[var(--bg)] text-[var(--body)] font-mono text-[15px] leading-[1.7] antialiased;
+    font-variant-ligatures: none;
+  }
+  h1, h2, h3 {
+    @apply text-[var(--text)] font-bold tracking-[-0.02em];
+  }
+  a {
+    @apply text-[var(--accent)] no-underline;
+  }
+  a:hover {
+    @apply underline underline-offset-[3px];
+  }
+  code {
+    @apply text-[var(--text)] bg-[var(--card-2)] border border-[var(--line)] px-[0.3em] text-[0.9em];
+  }
+  ::focus-visible {
+    outline: 2px solid #33ccff;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .wrap {
+    @apply max-w-[1160px] mx-auto px-6;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-[9px] h-11 px-5 border border-[var(--line-strong)]
+      bg-[var(--card)] text-[var(--text)] font-semibold text-sm no-underline cursor-pointer
+      transition-[border-color,background,filter] duration-150;
+  }
+  .btn:hover {
+    @apply border-[var(--accent)] no-underline;
+  }
+  .btn-primary {
+    @apply border-0 text-[var(--accent-ink)];
+    background: var(--active);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+  .btn-sm {
+    @apply h-[34px] px-[13px] text-[13px];
+  }
+  .kicker {
+    @apply inline-block mb-3.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)];
+  }
+  .kicker::before {
+    content: "// ";
+    color: var(--muted);
+  }
+  .grad {
+    background: var(--active);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .badge {
+    @apply inline-flex items-center gap-2.5 border border-[var(--line-strong)] bg-[var(--card)]
+      py-[5px] pl-[6px] pr-3 text-xs text-[var(--body)] no-underline;
+  }
+  .badge:hover {
+    @apply border-[var(--accent)] no-underline;
+  }
+  .badge b {
+    @apply text-[11px] tracking-[0.04em] px-[7px] py-px text-[var(--accent-ink)] font-bold;
+    background: var(--active);
+  }
+  .facts {
+    @apply flex flex-wrap gap-x-5 gap-y-2 mt-5 text-xs text-[var(--muted)];
+  }
+  .facts span::before {
+    content: "■ ";
+    color: var(--ok);
+    font-size: 9px;
+    vertical-align: 2px;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 h-[23px] px-2 border border-[var(--line)]
+      bg-[var(--card-2)] text-[var(--body)] text-[10.5px] whitespace-nowrap;
+  }
+  .chip-current {
+    @apply border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-soft)];
+  }
+  .chip-ok {
+    @apply border-[#9ece6a]/50 text-[var(--ok)] bg-[var(--ok-soft)];
+  }
+  .report-card {
+    @apply border border-[var(--line)] bg-[var(--card)] p-7 transition-colors duration-200;
+  }
+  .report-card:hover {
+    @apply bg-[var(--card-2)];
+  }
+  .report-card.current {
+    @apply border-[var(--line-strong)];
+  }
+  .report-card.current::before {
+    content: "";
+    display: block;
+    margin: -28px -28px 24px;
+    height: 2px;
+    background: var(--active);
+  }
+  .grid-bg {
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.45;
+    -webkit-mask-image: radial-gradient(ellipse 75% 65% at 72% 45%, #000 20%, transparent 72%);
+    mask-image: radial-gradient(ellipse 75% 65% at 72% 45%, #000 20%, transparent 72%);
+  }
+  .term {
+    @apply border border-[var(--line)] bg-[var(--code-bg)];
+  }
+  .term pre {
+    @apply m-0 px-5 py-4 overflow-x-auto text-[13.5px] leading-[1.85] text-[var(--text)];
+    font-family: inherit;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .term .p {
+    @apply text-[var(--ok)] select-none;
+  }
+  .copy {
+    @apply h-8 px-[11px] border border-[var(--line)] bg-[var(--card)] text-[var(--muted)]
+      text-xs cursor-pointer;
+  }
+  .copy:hover {
+    @apply text-[var(--text)] border-[var(--line-strong)];
+  }
+  .copy.done {
+    @apply text-[var(--ok)] border-[var(--ok)];
+  }
+}
+
+/* Square corners everywhere — the aesthetic's signature. */
+* {
+  border-radius: 0 !important;
+}
+
+/* Numbered verification trace (report page). */
+.trace {
+  @apply list-none m-0 p-0 border-l border-[var(--line-strong)];
+  counter-reset: step;
+}
+.trace li {
+  @apply relative pb-[34px] pl-11 text-sm;
+  counter-increment: step;
+}
+.trace li:first-child {
+  padding-top: 2px;
+}
+.trace li:last-child {
+  padding-bottom: 0;
+}
+.trace li::before {
+  content: counter(step);
+  position: absolute;
+  left: -14px;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}

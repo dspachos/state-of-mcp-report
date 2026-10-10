@@ -2,6 +2,8 @@
 
 A source-verified white paper on where the Model Context Protocol (MCP) stands, where it runs, and where it is going.
 
+**🌐 Editions site:** **https://dspachos.github.io/state-of-mcp-report/** — every edition with a summary, verification results, and PDF download.
+
 Pipeline per edition: parallel research passes → synthesis → citation verification → adversarial review → typeset PDF.
 
 ## Current edition
