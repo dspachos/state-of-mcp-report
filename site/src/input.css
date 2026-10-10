@@ -150,59 +150,9 @@
   .term {
     @apply border border-[var(--line)] bg-[var(--code-bg)];
   }
-  .term pre {
-    @apply m-0 px-5 py-4 overflow-x-auto text-[13.5px] leading-[1.85] text-[var(--text)];
-    font-family: inherit;
-    white-space: pre-wrap;
-    word-break: break-all;
-  }
-  .term .p {
-    @apply text-[var(--ok)] select-none;
-  }
-  .copy {
-    @apply h-8 px-[11px] border border-[var(--line)] bg-[var(--card)] text-[var(--muted)]
-      text-xs cursor-pointer;
-  }
-  .copy:hover {
-    @apply text-[var(--text)] border-[var(--line-strong)];
-  }
-  .copy.done {
-    @apply text-[var(--ok)] border-[var(--ok)];
-  }
 }
 
 /* Square corners everywhere — the aesthetic's signature. */
 * {
   border-radius: 0 !important;
-}
-
-/* Numbered verification trace (report page). */
-.trace {
-  @apply list-none m-0 p-0 border-l border-[var(--line-strong)];
-  counter-reset: step;
-}
-.trace li {
-  @apply relative pb-[34px] pl-11 text-sm;
-  counter-increment: step;
-}
-.trace li:first-child {
-  padding-top: 2px;
-}
-.trace li:last-child {
-  padding-bottom: 0;
-}
-.trace li::before {
-  content: counter(step);
-  position: absolute;
-  left: -14px;
-  top: 0;
-  display: grid;
-  place-items: center;
-  width: 27px;
-  height: 27px;
-  background: var(--bg);
-  border: 1px solid var(--line-strong);
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
 }

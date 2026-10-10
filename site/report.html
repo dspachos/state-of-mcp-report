@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Report — The State of MCP</title>
-    <meta name="description" content="Edition page: summary, verification results, and PDF download for one edition of the State of MCP white paper." />
+    <meta name="description" content="Edition page: summary and PDF download for one edition of the State of MCP white paper." />
     <meta name="theme-color" content="#13141c" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preload" href="fonts/JetBrainsMono.woff2" as="font" type="font/woff2" crossorigin />
@@ -55,16 +55,11 @@
             <div>
               <span class="kicker">Summary</span>
               <p class="text-[17px] leading-[1.7] !text-[var(--text)]" id="rep-lead"></p>
-              <p class="mt-4 text-base" id="rep-summary"></p>
+              <div class="mt-4 text-base" id="rep-summary"></div>
               <div class="mt-7" id="rep-status-note"></div>
             </div>
             <aside class="term">
-              <div class="flex items-stretch border-b border-[var(--line)] bg-[var(--card)]">
-                <span class="px-[18px] py-3 text-[13px] !text-[var(--muted)]">download</span>
-                <button class="copy ml-auto my-2 mr-2" id="rep-copy" type="button" data-copy="">Copy URL</button>
-              </div>
-              <pre><span class="p">$</span> curl -O <span id="rep-url"></span></pre>
-              <div class="px-[18px] py-3 border-t border-[var(--line)]">
+              <div class="px-[18px] py-3">
                 <a class="btn btn-primary w-full" id="rep-pdf" href="#" rel="noopener">Download PDF ↓</a>
               </div>
             </aside>
@@ -79,20 +74,6 @@
               <h2 class="text-[clamp(28px,3.6vw,40px)] leading-[1.15] tracking-[-0.035em]">What this edition found.</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="rep-highlights"></div>
-          </div>
-        </section>
-
-        <!-- Verification -->
-        <section class="py-[104px] border-b border-[var(--line)] bg-[var(--panel)]">
-          <div class="wrap grid grid-cols-1 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-16 items-start">
-            <div>
-              <span class="kicker">Verification</span>
-              <h2 class="text-[clamp(28px,3.6vw,40px)] leading-[1.15] tracking-[-0.035em]">Checked before it shipped.</h2>
-              <p class="mt-4 text-base">Every edition ends with an adversarial pass: a fresh-context reviewer that treats the draft as a claim to be broken, not a text to be edited.</p>
-            </div>
-            <ol class="trace" id="rep-verification">
-              <!-- items injected by site.js -->
-            </ol>
           </div>
         </section>
       </div>
@@ -115,7 +96,6 @@
     <script src="site.js"></script>
     <script>
       renderReport();
-      wireCopyButtons();
     </script>
   </body>
 </html>
