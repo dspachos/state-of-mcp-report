@@ -1,40 +1,52 @@
 # The State of the Model Context Protocol
 
-**A source-verified white paper · August 2026**
+**A source-verified white paper · October 2026 · Edition 2**
 
 [![Read the white paper (PDF)](https://img.shields.io/badge/Read-white_paper_PDF-1B365D?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](https://github.com/dspachos/state-of-mcp-report/blob/main/state-of-mcp-whitepaper.pdf)
 
-**[Direct download (raw PDF, 716 KB)](https://raw.githubusercontent.com/dspachos/state-of-mcp-report/main/state-of-mcp-whitepaper.pdf)** — or use the *Download raw file* button on the viewer page.
+**[Direct download (raw PDF, 780 KB)](https://raw.githubusercontent.com/dspachos/state-of-mcp-report/main/state-of-mcp-whitepaper.pdf)** — or use the *Download raw file* button on the viewer page.
 
-**25 pages · two-column · 4 figures · 123 cited sources** — every URL fetched and checked on 2026-08-25.
+**27 pages · two-column · 169 cited sources** — every URL fetched and checked on 2026-10-09. Edition 1 (August 2026) remains available in git history.
 
-> Twenty-one months in, MCP isn't a promising standard anymore — it's load-bearing infrastructure. This paper covers the backward-incompatible stateless rewrite (2026-07-28), the handover to the Linux Foundation, who actually supports it across desktop / IDE / OS / web / API surfaces, ecosystem numbers that disagree by 3×–11×, and why security posture depends on implementation discipline more than the spec.
+> Twenty-three months in, the protocol wars are over: MCP is the settled answer at the agent-to-tools boundary. This edition covers the stateless `2026-07-28` spec on its new metronome (next release: December 15, 2026), a foundation that now hosts the whole agentic stack and certifies competence in it, a still-"preview" registry holding 41,000+ servers, SDK downloads near half a billion a month, a security picture that finally industrialized (285 CVEs, CISA KEV entries, fix-propagation failures), and the fragmentation that moved up the stack instead of away.
 
-**How it was made:** four parallel research passes, lead synthesis, an independent citation-verification pass, and an adversarial review (30 of 123 sources independently re-fetched; all load-bearing claims matched; no fatal findings; 12 corrections applied and itemized below). Residual limitations are stated inline.
+**How it was made:** four parallel research passes (each with a "delta since the previous edition" section), lead synthesis, a citation-verification pass (167 sources, zero orphan citations, 11 corrections), and an adversarial review that re-fetched ~50 sources, **independently replicated the registry census (41,211 vs the paper's 41,183 — same-day drift)**, audited the CISA KEV feed, and parsed the adoption survey PDF earlier editions couldn't. Verdict: **PASS WITH NOTES — 0 fatal, 4 major, all fixed** (a false "first CISA KEV entry" claim, a growth-percentage arithmetic error, a stale vendor-gateway characterization, and a survey cohort mislabel). Residual limitations are stated inline and in the provenance notes.
 
 ---
 
 ## 1. Executive Summary
 
-The Model Context Protocol (MCP) is an open, JSON-RPC-based protocol that standardizes how AI applications ("hosts"/"clients") connect to external tools, data, and prompts exposed by "servers" [1, 5]. Twenty-one months after Anthropic introduced it (November 2024) [1, 9], MCP has become the de facto integration standard at the agent-to-tools/data boundary — a placement reflected in analyst framing that now treats MCP as an "Early Majority" technology [105] — and it has changed institutional hands in the process [15].
+Twenty-three months after Anthropic open-sourced the Model Context Protocol, MCP is no longer a promising experiment; it is the default answer to "how does an agent talk to my product" — and the center of gravity of a formalized, foundation-governed, standards-track ecosystem [6, 7].
 
-**Where it is now:**
+The headline numbers, all as of 2026-10-09:
 
-- **Specification:** The current GA specification is dated **2026-07-28** — the fifth published version of the protocol, following 2024-11-05, 2025-03-26, 2025-06-18, and 2025-11-25 [3, 6, 7, 8]. It is a radical, backward-incompatible simplification: a *stateless core* (no initialization handshake, no session IDs) [2, 3], a formal *extensions framework* (Tasks, MCP Apps, Enterprise-Managed Authorization) [2, 3], hardened OAuth (RFC 8707 resource indicators, RFC 9207 issuer validation, Client ID Metadata Documents replacing Dynamic Client Registration) [3, 2], and the formal deprecation of Roots, Sampling, Logging, the legacy HTTP+SSE transport, and DCR, each with a minimum twelve-month offramp [3, 12].
-- **Governance:** MCP is **no longer Anthropic-owned**. On **2025-12-09** it was donated to the **Agentic AI Foundation (AAIF)**, a Linux Foundation directed fund co-founded by Anthropic, Block, and OpenAI, with support from Google, Microsoft, AWS, Cloudflare, and Bloomberg [15, 16, 17]. Technical governance (maintainers + SEP process) is unchanged by the move [16, 14].
-- **Support:** MCP runs natively across **desktop apps** (Claude Desktop [30]; ChatGPT apps with caveats [34, 35]), **IDEs** (VS Code [46], Visual Studio [47], JetBrains [48, 49], Cursor [50], Windsurf [51], Zed [52]), **the OS layer** (Windows On-Device Registry, public preview) [53, 54], **web apps and agent platforms** (Claude connectors [31], Copilot Studio [41], Gemini Enterprise [43], Microsoft Foundry [55], AWS Bedrock AgentCore [56], Cloudflare [58]), **APIs and headless SDKs** (OpenAI Responses API [37] and Agents SDK [38], Anthropic Messages API MCP connector [33], Claude Agent SDK / Claude Code [32], LangChain/LangGraph [60, 61], Microsoft Agent Framework [62], Google ADK [64]), and **first-party API servers** (GitHub [65, 66, 67], Stripe [68], Shopify [69], Microsoft Learn [70]). No first-party local stdio MCP support is documented on any mobile platform; see §5.6 for the hedged mobile picture [31, 34].
-- **Ecosystem scale:** Directory counts conflict by methodology — **24,240** distinct servers in the official Registry per a third-party census (2026-08-22) [73], **77,817** listings in Glama (2026-08-25) [74], **22,070** in PulseMCP (2026-08-14) [75], **6,798** in Smithery (2026-08-25) [76], and **300+** Docker-verified [71]; an independent verified catalog counts only **8,433** servers and describes that figure as a floor [75]. Ten official SDKs exist; maintainers cited "close to half-a-billion downloads a month" across Tier 1 SDKs at the GA release [26, 2].
-- **Security:** A documented attack surface (tool poisoning [86], rug pulls [87], prompt injection [86, 96], token passthrough [27, 28], DNS rebinding [29], malicious packages — including what Koi Security characterized as the first real-world malicious MCP server seen in the wild (September 2025) [90, 91]) is being met by spec-level OAuth hardening [3, 27] and vendor guidance [94, 96], but remains the top enterprise risk.
+- **Specification:** `2026-07-28` remains the latest revision [1, 3]. It made the protocol stateless (no `initialize` handshake, no `Mcp-Session-Id`), added Multi Round-Trip Requests (MRTR) and `subscriptions/listen` [2, 162], deprecated Roots, Sampling, Logging, and OAuth Dynamic Client Registration, and formalized the extensions framework [2]. Nothing has shipped since; the draft changelog for the next revision is empty [3]. The maintainers have committed to a firm six-month cadence: **December 15, 2026**, then June 15 [5].
+- **Governance:** MCP is hosted by the **Agentic AI Foundation (AAIF)**, a directed fund under the Linux Foundation (donated 2025-12-09 by Anthropic, co-founded with Block and OpenAI) [6, 7, 53]. AAIF now hosts six projects — MCP, goose, AGENTS.md, agentgateway, A2A, and Agent Router [8] — and launched its first certification, **MCPA**, on 2026-09-14 [9].
+- **Scale:** The official MCP Registry — still labeled **preview** [100] — contains **41,183 unique latest-version servers** (40,676 active / 507 deprecated) per this edition's own same-day census of the registry API (412 pages) [10]. Independent censuses in the same week read 39,492–40,965 [11, 12, 13]. The registry passed 40,000 on 2026-10-08 [13]; September 2026 was its largest month ever [13, 11, 12]; it held "close to two thousand" entries in November 2025 [12] — roughly **20× growth in ten months**.
+- **Adoption:** Tier-1 SDK downloads are running at roughly **475–545 million per month** [11, 12] (official: "close to half a billion" [4]; TypeScript ~75M/week, Python ~60.9M/week [13]). Every large AI platform now ships MCP support: Claude [14], ChatGPT [15, 16], Microsoft Copilot (consumer to US Government clouds) [17, 18, 82], Google Gemini (consumer Spark [19, 20], Workspace [21], Enterprise [22]), AWS Bedrock AgentCore [23], Cloudflare [24, 30], plus every major IDE [83, 85, 86].
+- **Security:** the threat picture escalated sharply in Aug–Oct 2026: 285 CVEs against 149 open-source MCP projects in 2026 with documented fix-propagation failures [25]; MCP projects are now on CISA's Known Exploited Vulnerabilities catalog — LiteLLM alone appears twice (CVE-2026-42271, command injection, added 2026-06-08 [169]; CVE-2026-59822, improper authentication, added 2026-09-02 alongside Starlette CVE-2026-48710 [26, 169]); a CVSS 10.0 in mcp-atlassian [27]; a newly named cross-protocol attack class ("protocol pivoting") with SSRF fixes at Google, Weaviate, and two government organizations [28]; and three auth bugs in thirty days in the SDK/gateway layer [29].
+- **Direction:** consolidation at the protocol core (one foundation [8], one certification [9], one packaging standard above MCP in Agent Plugins [32, 33]) while fragmentation moved up the stack (state management [166], UI extension layers like Atlassian's AMP [39, 41], OpenAI's ChatGPT-specific extensions [35]) and out to the IETF (the proposed **agentproto** working group [36, 37]). No vendor deprecation of MCP was found; the platform vendors cited above all shipped MCP-based features in this window [17, 24, 38, 123].
 
-**Where it is going:** The maintainer roadmap (August 2026) prioritizes five areas: agentic messaging primitives (webhooks/channels; Tasks maturing toward core), HTTP-native transport unification (Streamable HTTP over stdio; ETag caching), agent identity and enterprise security (DPoP, workload identity, token exchange), improved primitives (a single tool-result contract, progressive discovery for large catalogs), and SDK/conformance tooling [22]. Google's A2A protocol — officially complementary to MCP, agent-to-agent — is joining the same foundation, consolidating the two protocols under one neutral home [115, 116]. OpenAI's Apps SDK [117, 36] and the cross-vendor Agent Plugins 1.0 standard [119, 120] both build *on top of* MCP rather than replacing it; no major vendor has been verified to deprecate MCP support (absence of evidence, not proof).
-
-**Bottom line:** MCP has crossed from "promising standard" to "load-bearing infrastructure" for the agent ecosystem, with the credibility risks that entails: a breaking 2026-07-28 rewrite now in its migration window [3, 110], a registry still in preview [18, 19], unverified adoption claims from directories [73, 74, 75, 76], and unresolved scaling problems at the many-tools frontier [106].
+**The one-sentence verdict:** the protocol layer has effectively been settled in MCP's favor; the open battlegrounds are now trust (auth, identity, supply-chain integrity), operations (gateway/management planes), and the layers immediately above the protocol.
 
 ---
 
-## 2. What MCP Is (Primer)
+## 2. What Changed Since Edition 1 (2026-08-25)
 
-MCP follows the Language Server Protocol (LSP) playbook: the specification itself states that MCP "takes some inspiration from the Language Server Protocol," standardizing a small, capability-negotiated JSON-RPC contract [5]. A compliant client interoperates with any compliant server, replacing N×M bespoke integrations with N+M. An MCP **server** exposes primitives — **tools** (model-invocable functions), **resources** (readable data), and **prompts** (templated interactions) — plus optional capabilities; a **host** embeds one or more **clients**, each connecting to one server over a transport [5]. MCP is transport-agnostic in principle; in the 2026-07-28 specification exactly two transports are standard: **stdio** (newline-delimited JSON-RPC over a client-launched subprocess) and **Streamable HTTP** (every request is an HTTP POST returning JSON or a request-scoped SSE stream) [4].
+For readers of the first edition, the delta in one page:
+
+1. **No new spec revision.** `2026-07-28` remains current [1, 3]; the next release is scheduled for December 15, 2026, on a newly firm six-month cadence [5].
+2. **The official registry grew ≈70%** in about six weeks (24,240 distinct servers on 2026-08-22 per a third-party census [169] → 41,183 latest-version entries on 2026-10-09 per this edition's own census [10]) and passed 40,000 on 2026-10-08 [13]. It is still in preview; no GA [100, 101].
+3. **Rust and Ruby SDKs were promoted to Tier 1** [124] (both were Tier 2 at the 2026-07-28 matrix [11]); the TypeScript SDK's 2026-07-28 support ships as new v2 split packages while the v1 package (still the most-installed) targets `2025-11-25` [11, 43].
+4. **Security escalation:** CISA KEV listings (LiteLLM, Starlette) [26], CVSS 10.0 (mcp-atlassian) [27], the 285-CVE propagation study [25], "protocol pivoting" as a named attack class [28], and three SDK/gateway auth bugs in 30 days [29].
+5. **OpenAI DevDay 2026 (Sept 29):** Plugin Extensions, organic plugin discovery, and **MCP Events support** [45, 46, 47, 48] — a partial (webhook-only) implementation of a still-unratified draft spec [49], a shipping-ahead-of-spec first for the ecosystem.
+6. **AAIF consolidation completed:** A2A joined as a hosted project [31]; agentgateway and Agent Router added [8]; MCPA certification launched (2026-09-14) [9].
+7. **IETF movement:** the **agentproto** working-group-forming BoF at IETF 126 (July 23) voted 154–51 to form a WG (while rejecting the initial scope 38–124) [36]; a proposed charter was updated 2026-09-15 and is in internal chartering review [37].
+8. **Google's consumer surfaces opened up:** Gemini Spark custom MCP-connected apps (US-restricted rollout) [19], built-in MCP connections (Canva, OpenTable, Instacart) [20], and Gemini-in-Workspace third-party MCP connectors (Sept 2026) [21]. The edition-1 Gemini Enterprise GA-vs-preview conflict resolves to **GA** (release-notes entry dated 2026-08-07) [22].
+9. **Atlassian announced AMP** (Oct 6–7), an explicitly non-competing "human-agent collaboration" layer built on MCP + A2A [38, 39, 40] — the clearest example of consolidation moving up the stack.
+10. **Market consolidation:** Arcade.dev acquired Smithery (2026-08-05) [51]; Snowflake agreed to acquire Natoma [12]; ~$211M of disclosed funding into the MCP gateway/security category [11].
+11. **Cloudflare deprecated `McpAgent`** (2026-08-06) [24] — the first major vendor retirement caused directly by the stateless `2026-07-28` spec.
+12. **Windsurf was renamed Devin Desktop** (June 2026, Cognition) [52]; ChatGPT's app directory became the **Plugins Directory** (2026-07-09) [15] and developer mode reached Pro/Plus self-serve [16].
 
 ---
 
@@ -42,123 +54,145 @@ MCP follows the Language Server Protocol (LSP) playbook: the specification itsel
 
 ### 3.1 Timeline of milestones
 
-| Date | Event | Status |
-|---|---|---|
-| 2024-11-25 | Anthropic announces MCP; the initial spec snapshot is dated 2024-11-05 [1, 5, 9] | Shipped |
-| 2025-03-26 | Spec adds OAuth 2.1, Streamable HTTP, JSON-RPC batching, tool annotations [6]; OpenAI begins adopting MCP in its developer platform (Agents SDK MCP support [38]; see also the March 2025 community anticipation of MCP in Responses [118]) | Shipped |
-| 2025-05-19 | Microsoft Build: broad first-party MCP support across GitHub, Copilot Studio, Dynamics 365, Azure AI Foundry, Semantic Kernel, and Windows 11; Microsoft/GitHub join the MCP Steering Committee [112] | Announced, rolled out over following months |
-| 2025-06-18 | Spec: structured tool output; servers as OAuth resource servers (RFC 8707); elicitation; resource links; batching removed [7] | Shipped |
-| 2025-06-23 | Google donates A2A to the Linux Foundation [113] | Shipped |
-| 2025-07-31 | MCP governance formalized (maintainer structure; SEP process) [14] | Shipped |
-| 2025-09-08 | Official MCP Registry opens in preview [18] | Preview |
-| 2025-11-25 | "One Year of MCP" spec: OIDC discovery, icons, Client ID Metadata Documents, experimental tasks, governance SEPs [8, 9] | Shipped |
-| 2025-12-09 | MCP donated to the Agentic AI Foundation (Linux Foundation) [15, 16, 17] | Shipped |
-| 2026-01-26 | MCP Apps official extension announced [24] | Shipped |
-| 2026-03 | First published maintainer roadmap (four priority areas: transport evolution/scalability, agent communication, governance maturation, enterprise readiness) [23] | Shipped (document) |
-| 2026-07-28 | Stateless-core specification GA (backward-incompatible); formal deprecation policy [2, 3] | Shipped |
-| 2026-08 (late) | Updated roadmap (five priority areas) [22] | Shipped (document) |
-| 2026-08-17 | A2A announced to join AAIF [116] | Announced, in progress |
+| Date | Milestone |
+|---|---|
+| 2024-11-05 | MCP launched (open-sourced by Anthropic); first spec revision [6, 7] |
+| 2025-03-26 | Spec revision (transports, annotations era) [1] |
+| 2025-06-18 | Spec revision (structured tool output, elicitation, auth hardening) [1] |
+| 2025-09-08 | Official MCP Registry enters preview (registry.modelcontextprotocol.io) [99] |
+| 2025-09-16 | GitHub MCP Registry launches (curated front-end) [59] |
+| 2025-10-24 | Registry API frozen at v0.1 [102] |
+| 2025-11-25 | Spec revision (icons, OIDC discovery, URL-mode elicitation, CIMD introduced, experimental tasks) [60] |
+| 2025-12-09 | Anthropic donates MCP to the **Agentic AI Foundation** (Linux Foundation directed fund; co-founders Anthropic, Block, OpenAI) [6, 53, 7] |
+| 2026-01-26 | **MCP Apps** (`io.modelcontextprotocol/ui`) stable — first official extension [54, 55] |
+| 2026-03-12 | A2A ships v1.0.0 (production-ready) [56] |
+| 2026-04-27 | Tasks extension (SEP-2663) reaches Final [57] |
+| 2026-05-21 | `2026-07-28` release candidate locked [4] |
+| 2026-06-18 | Enterprise-Managed Authorization promoted to stable [58] |
+| 2026-06-26 | WebSocket transport SEP-1288 closed as dormant [163] |
+| 2026-07-09 | ChatGPT Plugins Directory replaces the app directory [15] |
+| 2026-07-23 | GitHub MCP Server ships `2026-07-28` support [61]; IETF 126 agentproto BoF votes to form a WG [36] |
+| 2026-07-28 | **Spec `2026-07-28` GA** (stateless core, MRTR, subscriptions, extensions framework) [1, 2]; TypeScript SDK v2.0.0 ships a day early [43] |
+| 2026-08-05/06 | Arcade.dev acquires Smithery [51]; Cloudflare deprecates `McpAgent` [24]; A2A joins AAIF (AAIF blog undated; edition-1 press date 2026-08-17) [31] |
+| 2026-08-12 | Core Maintainers set a **firm six-month release cadence** (Dec 15 / Jun 15) [5] |
+| 2026-08-22 | "The New MCP Roadmap" — five priority areas [65] |
+| 2026-09-02 | LiteLLM MCP auth bypass (CVE-2026-59822) added to CISA KEV [26] |
+| 2026-09-14 | AAIF launches **MCPA** certification (aligned to `2026-07-28`) [9] |
+| 2026-09-29 | OpenAI DevDay 2026: Plugin Extensions; MCP Events support (proposed draft) [45, 46] |
+| 2026-10-06/07 | Atlassian announces AMP (layer atop MCP + A2A) [38, 39] |
+| 2026-10-08/09 | Official registry passes 40,000 [13]; this edition's census reads 41,183 [10] |
 
 ### 3.2 Governance model
 
-- **Stewardship:** AAIF (Linux Foundation directed fund), co-founded by Anthropic, Block, and OpenAI; founding projects MCP, goose, AGENTS.md; platinum members include AWS, Anthropic, Block, Bloomberg, Cloudflare, Google, Microsoft, and OpenAI [15, 16, 17].
-- **Technical direction:** unchanged — maintainers decide, guided by the SEP (Specification Enhancement Proposal) process introduced 2025-07-31 [14], Working/Interest Groups formalized in the 2025-11-25 revision (SEP-1302) [8], and a formal feature-lifecycle/deprecation policy with minimum twelve-month deprecation windows adopted with 2026-07-28 [3, 12].
-- **Standards bodies:** No IETF working group for MCP as of 2026-08-25. The CATALIST BoF request at IETF 125 is marked "Not WG Forming" on Datatracker — no working group was chartered [111]. MCP maintainers instead engage IETF OAuth and WIMSE on building blocks (DPoP, token exchange, workload identity) [22].
+MCP is established as "Model Context Protocol, a Series of LF Projects, LLC"; code and spec under Apache 2.0, documentation under CC BY 4.0 [62]. Technical authority is hierarchical and individual-based: **Lead Maintainers** (BDFL role) — currently **David Soria Parra and Den Delimarsky** — over **Core Maintainers** (Peter Alexander, Caitie McCaffrey, Kurtis Van Gent, Clare Liguori, Paul Carleton, Nick Cooper), Maintainers, and Contributors, with a formal Contributor Ladder [62]. Justin Spahr-Summers (co-inventor) is Lead Maintainer Emeritus [62]. Decisions flow through the SEP (Specification Enhancement Proposal) process; Working Groups triage SEPs in their own areas; the Core Maintainers meet bi-weekly, and their meeting notes are public GitHub discussions [62, 5].
+
+The AAIF division of authority is unchanged since donation: the AAIF Governing Board handles strategic investments, budget, and approval of new projects; individual projects keep "full autonomy over their technical direction and day-to-day operations" [53]. AAIF's project roster is now six: MCP, goose, AGENTS.md, agentgateway, A2A, Agent Router [8] — note that AAIF's September 2026 certification press release describes all six as "founding projects," which is marketing shorthand; only the first three were founding projects at the December 2025 launch [9, 7].
 
 ---
 
 ## 4. The Current Specification (2026-07-28)
 
+The TypeScript schema is the source of truth; JSON Schema is generated from it [63]. Nothing has shipped since `2026-07-28`: the releases page shows no newer tag, and the draft (next-revision) changelog is empty as of 2026-10-09 [1, 3].
+
 ### 4.1 The stateless core
 
-The defining change of the current spec: MCP removed the initialization handshake (`initialize`/`notifications/initialized`) and protocol-level sessions (`Mcp-Session-Id`) [2, 3]. Every request is self-describing — protocol version, client identity, and capabilities ride in `_meta` on each call; servers identify themselves via `serverInfo` in results [3]. A new `server/discover` RPC (MUST be implemented by servers; optional for clients) lets clients probe versions/capabilities/identity before connecting, including as a backward-compatibility probe on stdio [3]. Cross-call state moves to explicit, server-minted handles passed as tool arguments [2, 3].
+The defining break of `2026-07-28`: **protocol-level sessions are gone** [2]. The `initialize`/`notifications/initialized` handshake and the `Mcp-Session-Id` header were removed; every request now carries its protocol version and client capabilities in `_meta` (`io.modelcontextprotocol/protocolVersion`, `io.modelcontextprotocol/clientCapabilities`) [2]. A new mandatory `server/discover` RPC lets clients advertise-and-probe supported versions and identity up front; a version mismatch returns `UnsupportedProtocolVersionError` [2]. Cross-call state survives only as explicit server-minted handles — and the spec's security guidance is explicit that possession of a handle must not be treated as authentication (the new "state handle hijacking" class) [64]. Ping, `logging/setLevel`, `notifications/roots/list_changed`, SSE-stream resumability (`Last-Event-ID`), and standalone GET streams were all removed; log level moved to per-request `_meta` [2].
 
-Supporting changes:
-
-- **Multi Round-Trip Requests (MRTR)** replace all server-initiated requests (elicitation, sampling, roots): the server returns `resultType: "input_required"` with `inputRequests`, and the client retries with `inputResponses`; all results now carry a required `resultType` [3].
-- **Cacheable list results:** `tools/list`, `prompts/list`, `resources/*` return `ttlMs` and `cacheScope` (`public`/`private`), plus deterministic tool ordering for prompt-cache stability [3].
-- **`subscriptions/listen`:** one opt-in POST-response stream for change notifications, replacing the GET stream and `resources/subscribe` [3].
-- Removed: `ping`, `logging/setLevel`, SSE resumability (`Last-Event-ID`). Log level becomes per-request `_meta` [3].
-- **Operational alignment:** `Mcp-Method`/`Mcp-Name` headers are required on Streamable HTTP POSTs so intermediaries (gateways, CDNs) can route without parsing bodies; OpenTelemetry trace-context conventions for `_meta` are documented [2, 3].
+The consequences are visible across the industry: remote MCP servers became "normal HTTP workloads" (the roadmap's words) [65] — cacheable, load-balanced, gateway-routable — and the first big casualty was Cloudflare's stateful `McpAgent` primitive, deprecated and feature-frozen on 2026-08-06 precisely because the stateless spec removed the need [24].
 
 ### 4.2 Primitives, and what got deprecated
 
-Server primitives today: **tools** (with `structuredContent` output since 2025-06-18 [7], resource links [7], icons since 2025-11-25 [8], annotations since 2025-03-26 [6]), **resources**, and **prompts** [5]. Client/agent-facing features **Roots, Sampling, and Logging are formally deprecated** (SEP-2577) — still functional during the deprecation window, but new implementations should pass context via tool parameters/config, call model APIs directly, and use stderr/OpenTelemetry respectively [3, 2]. The experimental `tasks` capability from 2025-11-25 was moved out of core into the official **`io.modelcontextprotocol/tasks` extension**: the redesign replaces the blocking `tasks/result` with polling via `tasks/get`, adds `tasks/update` (plus `tasks/cancel`), removes `tasks/list`, and allows servers to return task handles unsolicited (SEP-2663) [3, 10].
+Server primitives remain **tools, resources, and prompts** [2]. Tools carry `structuredContent`; as of this revision `inputSchema`/`outputSchema` accept full JSON Schema 2020-12 and `structuredContent` accepts any JSON value [2]. Every result now has a required `resultType` (`"complete"` / `"input_required"`), and list/read results carry `ttlMs`/`cacheScope` so clients can cache catalogs deterministically [2].
+
+Server-initiated interaction became **MRTR** (Multi Round-Trip Requests): a server returns `InputRequiredResult` with input requests; the client retries the original request with input responses [2, 162]. This subsumes URL-mode elicitation's completion notifications and replaces server-initiated requests [2].
+
+**Deprecated (≥12-month lifecycle window, per the new feature-lifecycle policy SEP-2596) [2]:** Roots, Sampling, and Logging as client features (SEP-2577 — with migration guidance toward tool parameters, direct LLM APIs, and stderr/OpenTelemetry respectively) [2]; the HTTP+SSE transport [2]; `includeContext` values `"thisServer"`/`"allServers"` [2]; and OAuth 2.0 Dynamic Client Registration in favor of Client ID Metadata Documents (CIMD) [2]. **Tasks moved out of core** into the official `io.modelcontextprotocol/tasks` extension (polling via `tasks/get`, mid-flight input via `tasks/update`; `tasks/list` removed) [2].
+
+A reported conflict worth noting: the release blog narrates a ~12-month ("year-long") offramp for HTTP+SSE [4], while secondary reading of the normative deprecated-features registry gives roughly three months after the deprecation policy reaches Final [160]. We report both; the discrepancy is unresolved in primary sources.
 
 ### 4.3 Transports
 
-- **Standard:** stdio and Streamable HTTP only [4].
-- **Deprecated:** the 2024-11-05 HTTP+SSE dual-endpoint transport — replaced by Streamable HTTP in 2025-03-26 [6], formally classified Deprecated under the lifecycle policy in 2026-07-28 with a year-long offramp [3].
-- **WebSocket:** not a standard transport. The spec permits custom transports that preserve JSON-RPC message patterns and the per-request metadata model [4]; the WebSocket SEP (issue #1288) remains an unaccepted proposal — its GitHub status is "in-review" as of 2026-08-25, not adopted into the spec [13].
-- **Roadmap direction:** Streamable HTTP as the single binding, "spoken over" stdio for local servers, with HTTP/2 over stdio explored for multiplexing [22].
+Exactly two standard transports ship: **stdio** (local) and **Streamable HTTP** (remote), now hardened with required `Mcp-Method`/`Mcp-Name` routing headers (SEP-2243) plus `x-mcp-header` custom headers [2, 67]. WebSocket is **not** a standard transport and its SEP (1288) was closed dormant on 2026-06-26 after stalling — browser WebSocket auth limitations were the principal concern raised during review [163] — yet first-party opt-in support exists in the wild (Claude Code documents `type: "ws"` servers [68]; Microsoft Agent Framework Python ships `MCPWebsocketTool` [69]; LangChain removed its WebSocket class [70]). No IPC transport proposal exists (absence verified across the SEP index and roadmap, not exhaustively) [57, 66]. The roadmap's destination is **one transport**: Streamable HTTP, potentially HTTP/2, spoken over stdio for local servers [65, 66].
 
 ### 4.4 Authorization
 
-OAuth 2.1 lineage, hardened across revisions: OAuth 2.1 framework since 2025-03-26 [6]; RFC 8707 resource indicators and resource-server classification since 2025-06-18 [7]; OIDC discovery and incremental consent since 2025-11-25 [8]; RFC 9728 Protected Resource Metadata alignment [8]. In 2026-07-28: RFC 9207 `iss` validation (clients MUST validate before code redemption — closing authorization-server mix-up), client credentials bound to the issuing AS, and **Dynamic Client Registration deprecated in favor of Client ID Metadata Documents (CIMD)** [3, 2]. An **Enterprise-Managed Authorization (EMA)** extension adds enterprise identity flows built on the ID-JAG grant (Identity Assertion JWT Authorization Grant) [25].
+OAuth 2.1 lineage, tightened: RFC 9207 `iss` validation is mandatory before code redemption; `application_type` is required in DCR; client credentials are issuer-bound; and DCR itself is deprecated in favor of **CIMD** (client identity published at an HTTPS `/.well-known` URL) [2]. Server-sent `WWW-Authenticate` scope challenges arrived in the SDK layer (TypeScript 2.1.0 wave, September 2026; secondary reporting) [71]. The roadmap commits to **DPoP (RFC 9449)** finalization, Workload Identity Federation (SEP-1933), ID-JAG via Enterprise-Managed Authorization, and RFC 8693 token exchange, coordinated with IETF OAuth and WIMSE [65, 66] — the "agent identity" problem is now the roadmap's third priority area [66].
 
-### 4.5 Extensions framework
+### 4.5 The extensions framework
 
-Formalized in 2026-07-28: optional, additive, independently versionable extensions negotiated via an `extensions` capability field; experimentation in `experimental-ext-*` repositories pre-SEP (SEP-2133) [3, 11]. Official extensions today: **Tasks** [3, 10], **MCP Apps** (interactive UI surfaces for MCP-hosted apps, announced 2026-01-26) [24], and **Enterprise-Managed Authorization** [25].
+`2026-07-28` made extensions first-class (SEP-2133): an `extensions` capability field, reverse-DNS identifiers, opt-in negotiation on every request, independent evolution, and incubation in `experimental-ext-*` repositories [2, 167]. The official extensions as of 2026-10-09:
+
+| Extension | ID | Status | Notes |
+|---|---|---|---|
+| MCP Apps | `io.modelcontextprotocol/ui` | Stable (2026-01-26) [54, 55] | Interactive HTML UI in `ui://` resources; supported by Claude, ChatGPT, M365 Copilot, Goose, VS Code [54, 17]; OpenAI's Apps SDK is migrating onto it [35] |
+| Tasks | `io.modelcontextprotocol/tasks` | Final (SEP-2663, 2026-04-27) [57] | Server-directed async work; roadmap targets eventual core inclusion [66] |
+| Enterprise-Managed Authorization | `io.modelcontextprotocol/enterprise-managed-authorization` | Stable (2026-06-18) [58] | ID-JAG via enterprise IdP; adopters: Anthropic, Microsoft, Okta (first IdP); servers Asana, Atlassian, Canva, Figma, Linear, Supabase [58] |
+| OAuth Client Credentials | `io.modelcontextprotocol/oauth-client-credentials` | Official [167] | Machine-to-machine auth |
+| Skills over MCP | ext-skills | Official [167] | Discover/read Agent Skills as MCP resources |
+
+The **Skills extension SEP (2640)** is listed as Final in the SEP index (dated 2026-04-23 there) [57]; secondary reporting covered its announcement in September 2026 [72]. Also distinct and official-adjacent: **Server Cards** (SEP-2127) — static `.well-known` metadata for remote servers, separate from Registry `server.json` [73].
 
 ---
 
 ## 5. What Is Supported, and Where
 
-This is the support landscape as of 2026-08-25, verified against official vendor documentation. Caveats are stated inline; cells that could not be verified are marked UNVERIFIED.
-
 ### 5.1 Desktop applications
 
-| Product | MCP support | Notes |
-|---|---|---|
-| Claude Desktop (Win/macOS) | GA — local stdio servers; recommended path is Desktop Extensions (`.mcpb`) [30] | The original MCP reference client [1] |
-| ChatGPT desktop | Partial — built-in **apps** (MCP-based) run across surfaces; custom MCP apps are registered via Developer Mode (admin-enabled for Business/Enterprise/Edu), and full MCP including modify/write actions is "rolling out in beta" on those plans [34, 35, 36] | Registration is managed through web workspace settings [36]; no desktop-side custom-MCP registration flow is documented |
-| Gemini for Mac / Google app (Windows) | None documented — the Gemini for Mac support page does not mention MCP at all [42] | UNVERIFIED whether any exists |
-| JetBrains IDEs | GA — MCP **client** in AI Assistant (since 2025.1) [48]; the IDE is also an MCP **server** (bundled plugin since 2025.2, enabled by default, consumable by Claude Code, Codex, VS Code, Junie, and others) [49] | Client transport list UNVERIFIED in this pass |
+| Product | MCP support | Transports | Status |
+|---|---|---|---|
+| Claude (claude.ai/Desktop/Cowork/mobile) | Client — custom connectors to remote servers, brokered from Anthropic's cloud [14] | Streamable HTTP; legacy SSE via `/sse` URLs [14] | GA; connectors on Free (limit 1) through Enterprise [14] |
+| Claude Desktop (local) | Client — local servers via Desktop Extensions (`.mcpb`) or config [74] | stdio | GA [74] |
+| Claude Desktop on 3P | Admin-managed `managedMcpServers`, org plugins, per-tool policy; built-in M365/web-search/GitHub (beta) servers [75] | stdio + remote [75] | Documented GA [75] |
+| Claude Code | Client **and** server (`claude mcp serve`) [68] | stdio, http, sse, ws (non-spec), sdk [68] | GA [68] |
+| ChatGPT (apps/plugins) | Client — MCP-based apps; Plugins Directory (since 2026-07-09) [15] | Remote only (streaming HTTP + SSE) [16] | Apps GA; full-MCP developer mode self-serve for Pro/Plus [16], beta for Business/Enterprise/Edu [77] |
+| M365 Copilot | Client — MCP servers as plugins with **MCP Apps widgets** [17]; OAuth 2.1 + Entra SSO [17] | Remote (Streamable) [17] | Shipped WW Feb–Mar 2026 [80, 79] |
+| Copilot Studio | Client — MCP wizard, prebuilt connectors, Agents 365 BYO MCP, MCP management server (preview) [18, 81] | **Streamable only** (SSE dropped post-Aug 2025) [18] | GA; new flow + mgmt server preview [18, 81] |
+| Gemini consumer (Spark) | Client — custom MCP-connected apps (US, 18+, English; configured on web, usable on mobile) [19]; built-in Canva/OpenTable/Instacart connections [20] | Remote [19] | Restricted rollout [19] |
+
+Notes: Claude's custom connectors run through Anthropic's cloud even on desktop; users on managed Claude Desktop deployments cannot add their own servers [14, 75]. ChatGPT's developer-mode scope differs between its developer docs (Pro/Plus/Business/Enterprise/Education on web [16]) and its consumer help center (beta for Business/Enterprise/Edu, with Pro/Plus described as read-only connector access) [77] — a live doc-vs-doc discrepancy. No ChatGPT desktop-app MCP parity is documented (absence of documentation, not proof of absence) [15].
 
 ### 5.2 IDEs and editors (all GA unless noted)
 
-- **VS Code / GitHub Copilot:** native MCP support; stdio + Streamable HTTP with SSE fallback; automatic OAuth; configuration forwarded to the Agent Host [46].
-- **Visual Studio 2022 (17.14+) / VS 2026:** local command-based and remote HTTP/stdio servers; organization allowlists via GitHub policy [47].
-- **Cursor:** stdio, SSE, Streamable HTTP; OAuth via an `auth` object [50].
-- **Windsurf (Cascade):** stdio, Streamable HTTP, SSE; OAuth per transport; 100-tool enablement cap; docs now sit under Devin Desktop [51].
-- **Zed:** tools + prompts; local (command) and remote (URL) servers; standard MCP OAuth; per-tool permission keys [52].
+| IDE | MCP support | Transports | Notes |
+|---|---|---|---|
+| VS Code (+ Copilot) | Client; spec `2025-11-25` support; MCP Apps; sandboxed local servers; org registries; marketplace (preview); built-in GitHub server (preview) [84] | stdio, http, sse [83] | GA since 1.102 (2025-07-14) [83]; enterprise policy off-by-default for Business/Enterprise [85] |
+| Visual Studio | Client (VS 2022 17.14+/VS 2026) [85] | local + http [85] | GA [85] |
+| JetBrains AI Assistant | Client **and** server (bundled, default-on; auto-configures Junie/VS Code/Claude Code/Codex/Copilot CLI) [86] | stdio + Streamable HTTP [86] | The edition-1 transport gap is resolved [86] |
+| Cursor | Client across editor/CLI/Cloud Agents [87, 88]; MCP Apps; deeplinks [89] | stdio, SSE, Streamable HTTP [87] | 3.6+ defaults to Auto-review approval [89] |
+| Windsurf → **Devin Desktop** | Client (Cascade); Plugin Store; team allowlists [52] | stdio, Streamable HTTP, SSE [52] | Renamed June 2026; config moved to `~/.config/devin/` [52] |
+| Zed | Client — Tools + Prompts; forwards servers to ACP external agents [90] | local + remote [90] | MCP-server extensions slated for deprecation in favor of the official registry [91] |
 
 ### 5.3 Operating-system layer
 
-- **Windows 11:** the MCP server registry is now the **Windows On-Device Registry (ODR)** — "native support for the Model Context Protocol" with agents discovering and connecting tools "via a secure, manageable Windows on-device registry," connectors contained "in a secure environment with their own identity and audit trail." **Public preview** (Insider Dev/Beta builds from 26220.7344, 2025-12-05) [53]; `odr.exe` registers local and remote MCP servers [54]. No comparable OS-level MCP integration from another major OS vendor is documented as of this writing.
-- **macOS / Linux:** no equivalent OS-level registry documented (none found).
+**Windows** remains the only OS with first-party MCP infrastructure: the **Windows On-device Agent Registry (ODR)** — MSIX auto-registration, `.mcpb` bundles, manual `odr.exe mcp add` for remote servers [93], contained agent sessions [94], built-in File Explorer and Settings connectors, Intune management [92] — is still **public preview** (build 26220.7262+) [92, 93], with package-identity requirements unenforced in the preview [93]. No macOS or Linux OS-level equivalent exists (absence of documentation, not proof of absence); Google's macOS Gemini app has announced Spark integration with shipped status unverified [20].
 
 ### 5.4 Web apps and hosted agent platforms
 
-- **Claude.ai:** Connectors are remote MCP servers reached from Anthropic's cloud infrastructure with OAuth; Pro/Max configure them individually, Team/Enterprise through admin pre-approval; local-only stdio servers remain a separate Claude Desktop mechanism [31].
-- **ChatGPT:** apps (the integrations formerly called "connectors") built on MCP; as of July 9, 2026 the app directory has migrated into a Plugin directory, with apps remaining the integrations that connect ChatGPT or Codex to external data and actions [35]. Developer Mode supports full MCP connectors; full write actions are beta for Business/Enterprise/Edu [34].
-- **Google Gemini Enterprise:** custom MCP server connectors are described as generally available but turned off by default pending organization-policy changes (release notes, 2026-08-07) [43]; the Business-edition help page frames the same capability under Pre-GA terms and StreamableHTTP-only transport [44] — a genuine **status conflict**; resolve before relying on it. The Agent Platform also *serves* a remote MCP server endpoint usable by Gemini CLI, ChatGPT, Claude, and custom apps [45].
-- **Microsoft:** Copilot Studio connects agents to external MCP servers (tools and resources) [41]; M365 Copilot **federated connectors** use an MCP model to fetch data in real time without indexing [39]; Agent Builder builds declarative agents and directs advanced integration needs to Copilot Studio — it is not an MCP configuration surface [40].
-- **Microsoft Foundry:** agents consume MCP tools, and Foundry toolboxes expose an MCP-compatible endpoint authenticated with Microsoft Entra ID and RBAC; long-running MCP operations are in preview and require the MCP tasks capability [55].
-- **AWS Bedrock AgentCore:** the Gateway fronts MCP servers/REST/Lambda as governed MCP endpoints with first-class MCP tools/prompts/resources, dynamic per-user listing, Streamable HTTP sessions, elicitation, and OAuth on-behalf-of token exchange (2026 expansion) [56]; the Runtime gained a stateful MCP client with elicitation, sampling, and progress notifications (2026) [57].
-- **Cloudflare:** build and deploy remote MCP servers on Cloudflare over Streamable HTTP with OAuth [58]; MCP server portals aggregate internal and SaaS MCP servers behind a single Access-gated endpoint [59].
+- **Claude.ai:** connectors directory (734 connectors as of 2026-10-03 per a third-party count [114]) + custom connectors; auth via published CIMD identity, DCR, or pre-registered OAuth clients [95].
+- **ChatGPT web:** apps/plugins [15]; hosted MCP tool in the Responses/Agents API (`connection_origin: "service"` vs `"environment"` — the latter can even run stdio servers in a session environment) [78].
+- **Google:** three distinct client surfaces — Gemini Enterprise (admin-governed custom MCP data stores, **GA per release notes dated 2026-08-07**, StreamableHTTP-only, plus Agent Registry/Gateway egress governance and MCP-based federated query for Data Cloud, preview 2026-10-02 [22]); Gemini in **Workspace** (third-party MCP connectors to Asana, Atlassian Rovo, HubSpot, Mailchimp, QuickBooks, Monday, Salesforce — rolled out September 2026, on by default [21]); consumer Gemini Spark (above) [19]. Google is steering new Gemini Enterprise subscriptions from Code Assist to **Antigravity** for IDEs (2026-09-17) [22]; Antigravity's own MCP support is unverified.
+- **AWS:** Bedrock AgentCore Gateway — governed remote MCP endpoint fronting Lambda/OpenAPI/Smithy targets, supporting **all four recent spec revisions** including day-one `2026-07-28` [23] ($0.005/1,000 invocations [122]).
+- **Cloudflare:** both sides — client APIs (`addMcpServer`) and stateless servers (`createMcpHandler`; `McpAgent` deprecated) [30, 24]; MCP Server Portals behind Access [11]; experimental `webmcp` bridge to Chrome's `navigator.modelContext` [30].
+- **Microsoft Foundry:** MCP tool GA (public + VNet endpoints); Foundry Toolboxes (preview) bundle tools behind one MCP endpoint; MCP tasks (preview) for >100s operations [165]; Government-cloud MCP agents GA June 2026 [82].
 
 ### 5.5 APIs and headless SDKs (client side)
 
-- **OpenAI:** Responses API hosted `mcp` tool type for remote MCP servers plus OpenAI-maintained connectors (`connector_id`) [37]; Agents SDK (Python/JS) supports hosted MCP, Streamable HTTP, SSE (deprecated legacy), and stdio [38].
-- **Anthropic:** Messages API MCP connector (remote MCP servers as tools in the API) [33]; Claude Agent SDK / Claude Code — MCP client over stdio, Streamable HTTP, legacy SSE, and WebSocket remote servers [32].
-- **LangChain/LangGraph:** `langchain-mcp-adapters` (Python/JS) over stdio and Streamable HTTP [60]; the LangGraph Agent Server also *exposes* agents as MCP tools over Streamable HTTP [61].
-- **Microsoft Agent Framework / Semantic Kernel:** Agent Framework connects to MCP servers via stdio, Streamable HTTP, and WebSocket (Python `mcp[ws]`) [62]; Semantic Kernel loads MCP servers as plugins (stdio and Streamable HTTP/SSE) [63].
-- **Google ADK:** ADK agents consume external MCP servers, and ADK documents building an MCP server that wraps ADK tools; supported in the Python, TypeScript, Go, and Java kits [64].
-
-Consistent pattern: **hosted/API clients are remote-only** (the Responses API takes a public `server_url` [37]; Claude connectors must be reachable from Anthropic's cloud [31]); stdio remains the universal local mechanism for IDEs and CLI agents [38, 32, 46].
+Native MCP clients: OpenAI Agents SDK (hosted/Streamable/stdio; SSE deprecated; accepts MCP SDK v1 and v2) [96, 11], Claude Agent SDK (stdio/http/sse + in-process SDK servers; MCP tool search; 25k-token output cap with file spillover) [76], LangChain `MCPAdapter` (FastMCP-based, beta; `langchain-mcp-adapters` replaced; WebSocket dropped) [70], Microsoft Agent Framework (stdio/StreamableHTTP/WebSocket; agent-as-server in Python/.NET/Go) [69], Semantic Kernel [97], Google ADK (`McpToolset` + `to_mcp_server`) [98], Cloudflare Agents SDK [30]. "Agent as MCP server" is now a documented pattern in at least six frameworks [76, 69, 70, 97, 98] — the protocol is becoming bidirectional at the agent layer.
 
 ### 5.6 Mobile
 
-Remote-connector only. Claude mobile apps use the same claude.ai connectors brokered from Anthropic's cloud [31]; ChatGPT's built-in apps run across surfaces while Developer Mode registration remains an admin/web-settings flow [34, 36]; Gemini Enterprise mobile coverage was not verified in this pass. **No first-party local stdio MCP support is documented on any mobile platform** (absence of documentation, not confirmed absence).
+No first-party mobile surface supports local (stdio) MCP. Remote connectors work account-wide on Claude (web/Desktop/Cowork/mobile) [14]; ChatGPT apps work across surfaces subject to plan/region [15]; consumer Gemini Spark custom apps work in the Android app (configured on web first) [19]. M365 Copilot widget availability on mobile is undocumented [17].
 
 ### 5.7 APIs as MCP servers (the supply side)
 
-First-party production MCP servers include **GitHub** (open-source local Go server announced 2025-04-04 [66]; remote server GA 2025-09-04 [67]; support for the "next MCP specification" announced 2026-07-23 — ahead of the official stateless release, including removal of Redis-backed sessions [65]), **Stripe** (`https://mcp.stripe.com`, OAuth) [68], **Shopify** (MCP servers for storefront commerce data) [69], **Microsoft Learn** (`https://learn.microsoft.com/api/mcp`, free, no-auth) [70], and Docker's catalog of packaged servers [71]. The **Docker MCP Catalog** packages 300+ verified containerized servers, launched in beta May 2025 with 100+ servers and named partners including Stripe, Elastic, Heroku, Pulumi, Grafana Labs, Kong, Neo4j, New Relic, and Continue.dev [71, 72]. API-management vendors expose existing REST APIs as MCP tool surfaces (Azure API Management/API Center [85]; Kong's MCP plugin [82]).
+GitHub (remote GA since 2025-09-04 — a date carried from edition 1's changelog reading; local HTTP mode; `2026-07-28` support shipped 2026-07-23 [61]; governance tooling in v1.12.0, Sept 2026 [118]), Stripe (remote MCP + **agent API keys** for autonomous clients [119]), Shopify (Storefront MCP per store + a UCP-bound catalog endpoint [120]), Microsoft Learn (`learn.microsoft.com/api/mcp` [121]), Cloudflare-operated servers [30], Docker's catalog (300+ verified containerized servers [111]). The pattern is settled: the large SaaS API now ships an MCP interface as a matter of course [61, 119, 120].
 
 ### 5.8 Registry infrastructure
 
-The **official MCP Registry** (registry.modelcontextprotocol.io) is a metadata-only directory (`server.json`, reverse-DNS namespaces bound to verified GitHub accounts or domains via OAuth/DNS/HTTP challenges) intended as an upstream source for downstream aggregators — not a marketplace or runtime, and not designed for self-hosting as a service [20] (the repository README nonetheless documents local development/deployment workflows for contributors, which is a different thing from operating a production mirror of the official registry) [19]. It opened in **preview 2025-09-08** with explicit warnings that "breaking changes or data resets could occur" before general availability [18], and announced an **API freeze at v0.1 on 2025-10-24** [19]. As of 2026-08-25 **no GA milestone has been published** — the README still frames GA as something that "will follow later," and code releases of the registry software are not service-GA announcements [18, 19]. Unpublishing is not yet supported (open issue #104), and version metadata is immutable once published [21]. Enterprise alternatives: JFrog MCP Registry (GA announced 2026) [78], the open-source AWS MCP Gateway & Registry [79], and the Docker catalog [71].
+- **Official MCP Registry:** still **preview** — the docs banner reads "Breaking changes or data resets may occur before general availability" (fetched 2026-10-09) [100]; no GA announcement exists on any official channel [101]; the repo README's milestones remain preview (2025-09-08) and API freeze (2025-10-24), with "GA release will follow later" [102]. Software releases continue (v1.8.x, Aug 2026: v1.8.1 security fixes including rejection of `github.io` domains in namespace verification; org namespaces restricted to Owners shipped in v1.8.0) [103]. Verification is GitHub OAuth/OIDC (`io.github.*`), DNS TXT, or HTTP well-known challenge for domain namespaces [104]; package-ownership checks (npm `mcpName`, PyPI/NuGet README markers, OCI labels, MCPB hashes) [105]. **DID:web is not part of the official model** [104]. Consumers are meant to be aggregators, not end clients [100, 106].
+- **Same-name traps:** JFrog MCP Registry (GA 2026-03-18 [108]), AWS Agent Registry (GA 2026-08-31 [109]), Workato's "MCP Registry" product (GA Aug 2026 [110]), and GitHub MCP Registry [59] are all *different things* from the official registry.
+- **GitHub MCP Registry:** curated (~394 entries per an Oct 2026 third-party count [107], vs 44 in Oct 2025 [123]); reported to read from the official registry [107].
+- **Docker MCP Catalog:** 300+ verified containerized servers [111]; Custom Catalogs & Profiles GA 2026-05-15 [112]; trust tiers Docker-built (signed, SBOM, provenance) vs community-built [113].
 
 ---
 
@@ -166,306 +200,349 @@ The **official MCP Registry** (registry.modelcontextprotocol.io) is a metadata-o
 
 ### 6.1 Server counts (conflicting by design — not averaged)
 
-| Directory | Count | As-of | Methodology |
-|---|---|---|---|
-| Official MCP Registry | 24,240 distinct servers | 2026-08-22 | Third-party census: two full paginations of the official API (794 pages; 79,341 version records deduplicated to 24,240 distinct servers); the author cautions to "treat any count you read, including mine, as a photograph rather than a fact" [73] |
-| Glama | 77,817 (+14,547 hosted connectors) | 2026-08-25 | Homepage counter; includes wrappers/mirrors [74] |
-| PulseMCP | 22,070 | 2026-08-14 | Directory API total as reported by a contemporaneous census [75] |
-| Smithery | 6,798 | 2026-08-25 | Directory counter [76] |
-| Docker MCP Catalog | 300+ verified | 2026-08-25 (docs) | Curated, container-packaged, Docker-verified subset [71] |
-| Skillselion (independent catalog) | 8,433 servers (5,392 publishers) | 2026-08-14 | Verified ingestion catalog; its authors call the figure "a floor," not a cross-directory deduplication estimate [75] |
+**Official MCP Registry** — independent full-API censuses within one week, all paging `/v0/servers` to the end at `version=latest`, deduplicating by name:
 
-Growth signal: listings attributed to PulseMCP grew from ~12,770 (March 2026, per SettleGrid [77]) to 22,070 (2026-08-14, per Skillselion [75]) — ≈ +73% in ~5 months, though these two snapshots come from different secondary reports of PulseMCP taken by different observers five months apart, and are therefore not guaranteed like-for-like; part of the delta may be methodology drift rather than new servers. PulseMCP's own statistics pages returned HTTP 403 during verification, so no PulseMCP-published figure is asserted here, and no client count is claimed. These are listing counts, not verified active deployments; treat all headline numbers as directional [73, 75].
+| Count | As-of | Active/deprecated | Source |
+|---|---|---|---|
+| 39,492 | 2026-10-05 | 39,015 / 477 | ajayk.sh (395 pages) [11] |
+| 40,047 | 2026-10-06 | 39,565 / 482; 23,818 namespaces | host0.ai (401 pages) [12] |
+| 40,965 | 2026-10-09 | 504 deprecated | gravity.fast daily tracker [13] |
+| **41,183** | **2026-10-09** | **40,676 / 507** | **This edition's own census (412 pages, ~12 min)** [10] |
+
+They disagree by a few percent because the registry changes hourly and dedupe rules differ [11, 12, 13]. Anchors for the growth curve: "close to two thousand" entries in Nov 2025 (maintainers, via host0.ai) [12] — though gravity.fast's own monthly series reads 927 at Nov-2025 month-end, so the measures differ [13]; "more than 10,000" at the AAIF launch (LF press, 2025-12-09) [7]; 24,240 on 2026-08-22 (jwatte.com's census) [169]; passed 40,000 on 2026-10-08 (gravity.fast changelog) [13] — i.e., **~20× in ten months**, with September 2026 the largest month ever (11,902 first-publishes per gravity.fast [13]; 14,456–14,724 latest-version publishes per host0/ajayk on a different measure [12, 11] — same story, different denominators).
+
+Registry composition (early Oct 2026, third-party censuses): **63% of entries expose a remote endpoint** (incl. 24,242 Streamable HTTP and 1,105 deprecated-SSE per ajayk [11]; 62.8–63% per host0 and gravity.fast [12, 13]); **~41% ship an installable package** (npm ~10.7k, PyPI ~4.2–4.3k, OCI ~1.05k, `.mcpb` ~1.05–1.45k) [11, 12]; 64% under `io.github.*` namespaces [12]; the top-10 namespaces hold 18.7% of entries and a single GitHub account holds 2,365 [12]; **~27% (11,089) first published in the 30 days to 2026-10-09** [13].
+
+**Unofficial directories (their own counters, as of early Oct 2026):**
+
+| Directory | Count | As-of | Caveat |
+|---|---|---|---|
+| Glama | 96,340–97,619 | Oct 5–8 [11, 12, 107] | Indexes GitHub-repo-like things; a 221,081 sitemap-based figure counts URLs, not servers [114] |
+| PulseMCP | ~21,700–21,747 | Oct 5–8 [11, 107, 115] | Blocks direct fetch (HTTP 403, same as Aug 2025); third parties report **submissions paused** [107]; roughly flat vs August while the official registry grew ≈70% since late August [10, 169] |
+| Smithery | 14,161 (as-displayed, own fetch) | 2026-10-09 [116] | Homepage claims 25k+ [115, 11]; public API totals ~18.3–19.2k [115, 13, 114]; only ~190 "verified" [115, 107]; acquired by Arcade.dev 2026-08-05 [51] |
+| Docker MCP Catalog | 300+ verified | Oct 9 (docs) [111] | Containerized, signed, SBOM [113] |
+| GitHub MCP Registry | ~394 curated | Oct 8 (3rd-party) [107] | Curated front-end [59] |
+| Claude connectors directory | 734 | Oct 3 (3rd-party) [114] | Curated |
+| Crawler view (Agenstry) | 204,020 indexed / 12,579 responding | Oct 4 [13] | "Everything reachable," not listings |
+
+Methodologies differ and the same server appears in several directories; never sum or average [11, 114]. GitHub topics as a supply signal: 34,043 repos tagged `mcp-server`; 90,629 tagged `mcp` (2026-10-09, gravity.fast) [13].
 
 ### 6.2 SDKs and developer surface
 
-The current SDK documentation lists **ten official SDKs** — TypeScript, Python, C#, Go, Rust, Java, Ruby, Swift, PHP, Kotlin — with TypeScript, Python, C#, Go, and Rust currently badged Tier 1 [26]. At the 2026-07-28 release the maintainers named TypeScript, Python, Go, and C# as the four Tier 1 SDKs updated to the new spec, with the Rust SDK supporting it in beta [2]. Maintainer-stated scale at GA: "close to half-a-billion downloads a month" across Tier 1 SDKs, with TypeScript and Python each past 1 billion cumulative downloads [2]; at donation time (December 2025) Anthropic cited 97M+ monthly downloads across Python and TypeScript [15]. FastMCP (Prefect) is the dominant third-party Python framework; FastMCP 1.0 was incorporated into the official MCP Python SDK in 2024 and the standalone package continues [80, 81].
+**Ten official SDKs** (SDK docs page, fetched 2026-10-09): TypeScript, Python, C#, Go, **Rust (Tier 1)**, **Ruby (Tier 1)** — both promoted since the 2026-07-28 matrix [124, 11] — plus Java (Tier 2), Swift, PHP, Kotlin (Tier 3) [124]. Ruby shipped 1.0.0 on 2026-07-24 with 100% conformance pass [125, 126]. One tension to note honestly: the Ruby 1.0 announcement (July) says the gem "meets every Tier 2 requirement" with Tier 1 development ongoing [125], while the current SDK page already lists Ruby as Tier 1 [124] — the page is the current state; the transition date is undocumented [126].
 
-### 6.3 Management plane
+The **v1/v2 split** is the practical developer story: Python `mcp` 2.3.0 speaks `2026-07-28` [11]; the TypeScript flagship v1 package (1.32.0, still the most-installed at ~10M vs 75M weekly for the ecosystem's npm footprint [11]) still targets `2025-11-25` [43], while `2026-07-28` support lives in new v2 split packages (`@modelcontextprotocol/server`, `client`, `node`, `express`; ESM-only, Node 20+) [11, 44]. v1 gets critical fixes "for at least six months" [43]. Other observed versions: Go 1.8.0, C# 2.2.0, Rust rmcp 3.5.0 (`2026-07-28` in beta), Ruby 1.6.1, Java 2.0.1; Python 2.x renamed `FastMCP` → `MCPServer` [11].
 
-Gateways/management tooling has commercialized: Docker MCP Gateway (invite-only under Docker AI Governance) [71], Kong AI Gateway's MCP plugin (proxies/aggregates MCP servers; converts APIs into MCP tool definitions) [82], Cloudflare MCP server portals [59], Azure API Management/API Center [85], Higress (AI gateway with MCP proxying/protocol conversion) [83], the open-source AWS MCP Gateway & Registry [79], and Composio's MCP Gateway [84].
+**Downloads (treat as noisy — CI included, all sources say so [12]):** TypeScript SDK 75.0M npm downloads in the week to 2026-10-03 (+948% YoY); Python `mcp` 60.9M/week (+472% YoY); `fastmcp` 14.4M/week; MCP-vs-A2A SDK downloads ~20:1 (gravity.fast, Oct 2026) [13]. Monthly totals: ≈475M (ajayk.sh) [11]; an independent ClickHouse series peaks at 545.5M (Aug 2026) and 464M (Sept 2026), noting a single-consumer step-change on Aug 25 cut Python's daily counts ~40% (host0.ai) [12]. Official framing: "close to half-a-billion downloads a month" across Tier 1 SDKs, TypeScript and Python each past 1 billion cumulative (MCP blog, July 2026 [4]; AAIF, Sept 2026 [9]). `mcp-remote` still pulls ~716K/week fifteen months after its 2025 critical RCE [11] — an install-habit data point.
+
+### 6.3 The management plane
+
+Twelve named gateways/management planes now converge on three features (terminate auth + inject credentials; per-tool policy/rate limits; logs/audit) [11]: Azure API Management, AWS AgentCore Gateway, Kong AI Gateway, Cloudflare (Workers + Portals) [24, 11], **agentgateway** (Solo.io, now an AAIF-hosted project [8]; v1.6.0, 2026-10-02 [157, 11]), Docker MCP Gateway [111], Obot, Lasso MCP Gateway (stagnant since Jan 2026) [164], Zuplo, Composio, IBM ContextForge, and Microsoft MCP Gateway — originally launched as a session-aware stateful router, **since rewritten stateless for the `2026-07-28` spec** (the README now requires `2026-07-28` clients and stores no transport sessions) [158]. That rewrite, like Cloudflare's `McpAgent` deprecation (§5.4), is evidence of vendors re-platforming onto the stateless core rather than resisting it. Add ToolHive (container runtime, Cedar authorization, Kubernetes scaling) [159]. Market consolidation: **Arcade.dev acquired Smithery** (2026-08-05 [51], six weeks after a $60M Series A [117]), **Snowflake agreed to acquire Natoma** (MCP governance) [12], and ~$211M across eight disclosed rounds has flowed into the category [11].
 
 ### 6.4 Enterprise adoption
 
-Named production adopters with dated sources: **Uber** (internal agent platform with MCP support across a microservices stack of "thousands of services," with an Agent Registry, Security Token Service, and MCP Gateway as a policy enforcement point [98]; headline execution numbers — ~60,000 agent executions/week, 1,500+ monthly active agents, 5,000+ engineers using AI tooling — come from secondary AAIF reporting, not Uber's own post [99]), **Smartsheet** (production remote MCP server on AWS) [100], **Chronograph** (client-facing MCP server connecting PE portfolio data to Claude) [101], **Propel** (vendor-reported first production MCP for PLM, June 2026) [104], **Fullcast** (August 2025) [103], **Moody's** (partner-reported via MarsBased) [102]. Analyst framing: InfoQ's 2026 trends report promotes MCP into the "Early Majority" category [105].
+- **Survey base rate (most credible available):** Stacklok's *State of MCP in Software 2026* — **41% of all surveyed organizations report MCP servers in production** (29% limited, 12% broad); **software respondents higher still, at 45%** (26% limited, 19% broad) [143]. PDF, parsed during the review pass.
+- **The debunked number:** "78% of enterprise AI teams use MCP in production" has no traceable source and was retracted by its original publisher [12, 144]; it should not be cited anywhere.
+- **Named production adopters (dated):** Bloomberg (enterprise MCP + Skills powering ASKB; contributed "Variants" to the standard; 2026-07-21 [145]; the "9,500+ engineers" scale figure is secondary [146]), Cloudflare ("billions of tool calls" served by its Code Mode MCP server for its own API, 2026-08-06 [24]), Uber (Agent Registry + MCP Gateway as policy enforcement) [147], Smartsheet [148], Chronograph [149], Propel Software [150], Atlassian (see §8; its MCP server's "2M MAU / 15M daily tool calls" figures now have two independent secondary confirmations [166, 42], but remain unconfirmed on Atlassian primary pages).
+- **AAIF-cited telemetry (self-reported, 2026-09-14):** ChatGPT MCP tool calls reached **98× their January level by August**; Resend passed **one million MCP calls in a single month** [9].
+- **Exposure telemetry:** Censys found 12,520 internet-reachable MCP services on 8,758 IPs in 56 countries (2026-04-28), 89.4% still speaking the `2025-03-26` protocol [12]; Trend Micro's like-for-like count of unauthenticated servers nearly tripled to 1,467 in nine months [12]. A fresher than 2026-07-28 adoption-telemetry datapoint was a v1 open item; the AAIF (Sept 14 [9]) and gravity.fast (daily [13]) series above are the current best.
+- Weak/secondary numbers we decline to promote: "28% of Fortune 500 operate MCP servers" (untraceable primary) [151]; Gartner's "one third of enterprise software includes agentic AI by 2028" (primary not located).
 
 ---
 
 ## 7. Security
 
-### 7.1 Threat classes
+### 7.1 Threat classes (standing)
 
-| Threat | Description | First documented |
-|---|---|---|
-| Tool poisoning | Malicious instructions hidden in tool descriptions that the model obeys; demonstrated with data-exfiltration PoCs against Cursor | Invariant Labs, April 2025 [86] |
-| Rug pull | Benign-at-approval server silently swaps tool definitions after consent | Invariant Labs, April 2025 [87] |
-| "Line jumping" | Poisoned descriptions influence the model before any tool call ("MCP servers can manipulate model behavior without ever being invoked") | Trail of Bits, 2025-04-21 [89] |
-| Prompt injection via MCP content | Poisoned tool output/external content induces unwanted model actions; a standing guidance topic | Invariant Labs (April 2025 demos) [86]; OWASP cheat sheet [96] |
-| Token passthrough / confused deputy | Forwarding tokens not minted for the receiving server; explicitly forbidden by the spec | Spec security considerations; "token passthrough is explicitly forbidden" [27, 28] |
-| DNS rebinding on local servers | Browser-originated requests hitting loopback servers; servers MUST validate `Origin` and bind to localhost | Spec transports security warning since 2025-03-26 [29] |
-| OAuth discovery SSRF | Server/client-supplied metadata and AS URLs treated as untrusted input; HTTPS-only, block private/loopback/metadata IPs, revalidate redirects | Official best-practices guidance [28] |
+The official Security Best Practices page (2026-07-28 docs tree, fetched 2026-10-09) documents, with mandatory mitigations [64]: **confused deputy** (static client IDs + consent-cookie bypass; per-client consent required), **token passthrough** (explicitly forbidden; audience validation), **SSRF** during OAuth metadata discovery and — new this revision — against authorization servers via CIMD, **state handle hijacking** (new with the stateless spec: a server-minted handle must never authenticate), **local MCP server compromise** (consent before one-click config, sandboxing, loopback binding), and OAuth authorization-URL validation (`javascript:` URLs → XSS → RCE via stdio) [64]. Earlier documented classes remain relevant: tool poisoning, rug pulls, line-jumping, prompt injection via MCP content, and DNS rebinding against local servers [152]. The canonical in-the-wild malicious server is still the npm `postmark-mcp` backdoor (Sept 2025; edition-1 finding, not re-verified this edition).
 
-### 7.2 Documented incidents
+### 7.2 Documented incidents and the Aug–Oct 2026 escalation
 
-- **`postmark-mcp` npm backdoor (September 2025)** — same-name npm impersonation of Postmark's legitimate repository whose version 1.0.16 "quietly cop[ied] every email to the developer's personal server"; characterized by Koi Security as "the world's first sighting of a real world malicious MCP server" [90]; Postmark's own disclosure confirms the fake package and BCC behavior [91].
-- **`@lanyer640/mcp-runcommand-server` (2025-09-30)** — legitimate-looking command-execution MCP server weaponized via a malicious update with reverse-shell `preinstall` hooks [92].
-- **Cursor CVE-2025-54136** — modifying an already-trusted MCP configuration (e.g., in a shared repo) yielded persistent RCE in versions ≤1.2.4; fixed in 1.3 [93].
-- Implementation-level flaws continue to surface: composition attacks combining individually plausible tools (Anthropic's Git MCP server flaws, fixed after Cyata's report) [108]; database MCP servers with SQL injection and missing authentication, with one vendor declining to patch as of 2026-05 [109].
+1. **Fix propagation is the systemic failure (JLS Technology, published 2026-10-09):** **285 CVEs** were published Jan 1–Oct 8, 2026 against 149 open-source MCP projects [25]. 177 of 186 CVEs with observable dates were fixed *before* NVD publication (median 54 days fix-first) — advisory-driven patching is ~2 months late by design [25]. **93 of 285 (33%) have no fixed version at all** [25]. Four Docker MCP Catalog images were built from commits predating upstream fixes (covering 41 CVEs; Docker notified 2026-10-09) [25]; two official-registry entries list in-range vulnerable versions [25]; three npm mirror scopes (`@iflow-mcp`, `@mseep`, `@fastmcp-me`) systematically re-publish others' servers, 24 of 36 sampled serving vulnerable versions [25]; of 13,689 enumerated forks, 34% lack at least one fix [25]. Named listings withheld until ≥2026-10-23 [25].
+2. **"Protocol pivoting" — a newly named cross-protocol class (Ars Technica, 2026-10-05; MCPCon NA presentation scheduled 2026-10-23) [28]:** initial access via one protocol (typically SSRF in a special-purpose MCP agent), then exploitation of trust assumptions *between* MCP and A2A [28]. Same-researcher SSRF fixes across five organizations: Google (CVE-2026-14540, MCP Toolbox for Databases, CVSS 8.0, fixed 1.5.0) [28, 130], Weaviate (CVSS 7.1, fixed 1.39.3) [28, 130], France's DINUM (patch merged 2026-09-04) [28, 131], Tangerang City, Indonesia (advisory 2026-09-03) [28, 130], Rapid7 (CVE-2026-97228, fixed Sept 2026) [28, 130]; a fifth case at JPMorgan Chase is claimed without a public advisory (unverified) [131].
+3. **Three MCP auth bugs in 30 days, one root cause — unverified authentication input (WorkOS, 2026-10-02) [29]:** the **MCP Python SDK OAuth client** (1.9.1–1.29.1, 2.0.0–2.1.1; malicious server could capture client secret/auth code/PKCE verifier; fixed 1.30.0/2.2.0; GHSA-qx49-fqc8-xw99, CVSS 7.5, **no CVE assigned** — a scanner gap) [29]; the **MCP Rust SDK (rmcp) < 2.0.0** (unvalidated `resource` in protected-resource metadata → cross-resource token theft; CVE-2026-63127, CVSS 8.2) [29]; and **LiteLLM < 1.84.0** (fabricated `Authorization` header triggered an OAuth2-passthrough fallback skipping the key check on `/mcp/`; **CVE-2026-59822, added to CISA KEV 2026-09-02** with a 2026-09-16 federal remediation deadline [26, 127]; reported in-the-wild chained with Starlette CVE-2026-48710) [29, 26].
+4. **mcp-atlassian (CVE-2026-77244, CVSS 10.0, published 2026-09-22) [27, 128, 129]:** the HTTP transport ran unauthenticated requests with the operator's own Atlassian token (permissive token verifier, OAuth proxy off by default, fallback to operator credentials on missing headers) [27]. Fixed 0.22.0 (2026-07-10), SSE-transport bypass closed 0.23.1 (2026-08-19) [27, 129]; the fix audit consolidated 37 advisories [129]. Not known exploited [27].
+5. **The stdio command-injection dispute (OX Security, April 2026; carried from edition 1) [132, 133]:** researchers argue MCP's stdio spawn pattern is a systemic command-injection vector (their scale figures — 150M+ downloads, "up to 200,000 vulnerable instances" — are researcher estimates, not established fact [132, 133]). Anthropic's position: the stdio execution model is a secure default and sanitization is the developer's responsibility [132]; an updated security policy followed within a week [133]. The protocol was not changed [133].
 
 ### 7.3 Mitigations and guidance
 
-Spec-level: RFC 8707 audience binding and resource-server obligations [7, 27], RFC 9207 `iss` validation, CIMD replacing DCR [3], and an explicit prohibition of token passthrough [27, 28]. Ecosystem: tool-definition pinning/hashing (MCP-Scan's built-in Tool Pinning verifies tool integrity via hashing [88]; OWASP recommends inspecting/pinning tool schemas with cryptographic hashes [96]), curated/verified catalogs (Docker) [71], and MCP-aware firewalls (Microsoft Entra Global Secure Access MCP firewall, preview) [95]. Guidance: official MCP security best practices (never pass tokens through; SSRF-harden OAuth discovery) [28], Microsoft's zero-trust MCP guidance [94], the OWASP MCP Security Cheat Sheet [96], and an NSA Cybersecurity Information Sheet on MCP security (June 2026; PDF-only — full text not parsed in this research) [97].
-
-**Inference:** the spec is hardening faster than the installed base is adopting the hardening; the practical security posture of most deployments depends on client and gateway implementation quality, not the spec.
+Official: the spec's Security Best Practices [64] and a new Local Server Security page [134]; the feature-lifecycle policy forcing deprecation of risky client features (Roots/Sampling/Logging) [2]. Vendor: Anthropic (connectors directory review model — Community is automated screening; Verified is human functional testing that "isn't a security audit" [135]; pre-submission checklist covers prompt-injection patterns [136]), Microsoft ("The state of MCP security in 2026" [137]; an OWASP MCP Top 10 implementation guide for Azure, MCP01–MCP10 [138]; Entra Global Secure Access MCP firewall [139]), Docker (two-tier catalog trust model [113] — while itself subject of the stale-image findings above [25]), OpenAI (Apps SDK requires production HTTPS Streamable HTTP servers with the spec authorization flow for private data/actions) [140], OWASP MCP Security Cheat Sheet [141], and an NSA Cybersecurity Information Sheet (June 2026; PDF-only, parsing blocked) [142]. Roadmap-level: DPoP, workload identity federation, agent identity, and "human-presence attestation" are the intended structural answers to "the caller is an agent, not a person" [65, 66].
 
 ---
 
 ## 8. Where MCP Is Going
 
-### 8.1 The maintainer roadmap (August 2026, five priority areas) [22]
+### 8.1 The maintainer roadmap (five priority areas, 2026-08-22)
 
-1. **Agentic messaging primitives** — server-initiated events via webhooks and channels (Triggers & Events WG); cross-WG composition of Tasks/Triggers/transports; continued Tasks work "toward eventual inclusion of the extension in the core protocol."
-2. **HTTP-native transport unification** — Streamable HTTP as the single binding spoken over stdio (HTTP/2 over stdio for multiplexing); caching extended to ETags; standardized error handling; capability scoping for tool lists.
-3. **Agent identity and enterprise security** — DPoP finalization and adoption; Workload Identity Federation (SEP-1933), ID-JAG (used by Enterprise-Managed Authorization), and RFC 8693 token exchange, coordinated with IETF OAuth and WIMSE.
-4. **Improved primitives** — one clear `tools/call` result contract (today `content` vs `structuredContent` "has confused server and client authors alike"); **progressive discovery** so clients "learn a server's tools and resources as they need them instead of ingesting the full catalog up front"; File Uploads WG continues.
-5. **SDK developer experience** — the extension contract; a generated-artifacts experiment (generate a Tier 1 SDK from the spec and validate against the conformance test suite).
+1. **Agentic messaging primitives** (McCaffrey, Liguori, Alexander): server-initiated events — channels/subscriptions and webhooks via the Triggers & Events WG; a composition review; and Tasks (SEP-2663) toward eventual core inclusion [66, 65].
+2. **HTTP-native transport unification and hardening** (Van Gent, Cooper): **Streamable HTTP over stdio** (possibly HTTP/2) as the single binding; ETag caching on `ttlMs`/`cacheScope`; standardized errors; capability scoping; secure server configuration [66].
+3. **Agent identity and enterprise-ready security** (Carleton, Delimarsky): DPoP; Workload Identity Federation (SEP-1933); ID-JAG; RFC 8693 exchange; IETF OAuth/WIMSE coordination; human-presence attestation under discussion [66].
+4. **Improved primitives** (Van Gent, Alexander, Delimarsky): redesign the `tools/call` result shape (the `content` vs `structuredContent` confusion); **progressive discovery** (learn catalogs incrementally instead of ingesting them); resolve primitive annotations (adopt or deprecate, SEP-2200) [66].
+5. **Improved SDK developer experience** (Delimarsky, Soria Parra): define the extension contract; experiment with generating Tier-1 SDK artifacts from the spec + conformance suite [66].
 
-### 8.2 Consolidation signals
+**Cadence is now firm:** the Aug 12 Core Maintainer meeting set the next release for **December 15, 2026, "no slipping,"** with June 15 to follow [5]; the Sept 30 meeting reviewed SEP-3398 (a formalized release cycle: planning opens 8 months out, tier-1 betas 1.5 months before, hard freeze at 1 month; candidate dates end-of-March/end-of-September) and SEP-3392 (extension lifecycle), and tasked the drafting of the triggers-and-events SEP [153]. Features that miss a date roll over [5].
 
-- **A2A joining AAIF** (announced August 2026, reported dated 2026-08-17 by press coverage; the AAIF page itself was fetched without a visible publish date: "Agent2Agent (A2A), the open standard for inter-agent communication, is joining the Agentic AI Foundation (AAIF) as a hosted project") puts both protocols under one neutral home [116]. A2A reported 150+ supporting organizations as of 2026-04-09, with production use in supply chain, financial services, insurance, and IT operations, and integration into Azure AI Foundry/Copilot Studio and Amazon Bedrock AgentCore Runtime [114]. A2A and MCP are officially complementary: "MCP is for agent-to-tool communication… A2A is for agent-to-agent communication… They are complementary" [115].
-- **OpenAI** built the Apps SDK explicitly on MCP — "an open standard built on the Model Context Protocol (MCP)… It extends MCP so developers can design both the logic and interface of their apps" — open-sourced so apps "can run anywhere that adopts this standard" (DevDay, October 2025) [117]; the current help center describes the app/plugin directory and Developer Mode full MCP connectors [35, 34, 36].
-- **Agent Plugins 1.0** (spec published 2026-08-06 with AWS, Anysphere, Microsoft, OpenAI, and Vercel, with Google joining as core maintainer the same day) is "an open standard that packages agent skills and MCP servers into one installable plugin that is governed independently of any single vendor" — a packaging layer above MCP, GA in VS Code, Copilot CLI, the GitHub Copilot SDK, and the GitHub Copilot app [119, 120].
-- **Anthropic** donated the protocol [15] and is platformizing around it: Tool Search and Programmatic Tool Calling, built explicitly "to help optimize production-scale MCP deployments, handling thousands of tools efficiently" [15, 121]; Xcode 26.3 ships a native Claude Agent SDK integration [122].
-- **No verified case of a major vendor deprecating MCP** was found. The pattern is layers on top, not replacement — Cursor's plugin system itself now "package[s] skills, subagents, MCP servers, hooks, and rules, into a single install" [123]. (Absence of evidence, not proof.)
+### 8.2 Standardization beyond the project
 
-### 8.3 Fragmentation vectors that remain real
+- **AAIF consolidation is complete fact:** A2A is hosted (joined Aug 2026 [31]); agentgateway and Agent Router round out a six-project stack spanning context (MCP), agent-to-agent communication (A2A), and operations (gateways) [8]. A2A itself shipped **v1.0.0** on 2026-03-12 [56], counts **150+ supporting organizations** (up from 50+ at launch) [154], and is integrated in Azure AI Foundry, Copilot Studio, and Bedrock AgentCore Runtime [154]. The complementary positioning is explicit: "A2A defines how agents communicate… while MCP defines how agents connect to internal tools and data sources" [154]. AAIF's **MCPA certification** (2026-09-14) institutionalizes MCP skills [9].
+- **IETF:** after the non-WG-forming CATALIST BoF (IETF 125, March) [50], the **agentproto** BoF at IETF 126 (July 23, Vienna) voted 154–51 to form a working group — while rejecting its initial scope 38–124 [36]. The proposed charter ("Agent Communication Protocols (agentproto)"): a baseline **agentic dialog management protocol** plus an informational reference architecture; updated 2026-09-15, in initial chartering/IAB review [37]. This is a general agent-communication effort, **not** an MCP working group — though the charter does name MCP (and A2A) as existing protocols the baseline is designed to be usable alongside via extension points [37]; the minutes note "a PR from the MCP side" [36]. MCP's own standards posture remains: identity work through IETF OAuth and WIMSE [65, 66].
 
-Optional-extension skew across implementations [22]; the registry still preview with deliberately limited moderation and delegated curation [18, 19, 20, 21]; parallel proprietary plugin formats (Cursor) [123]; adjacent protocols overlapping at the edges (A2A, UCP, AP2, A2UI and others) [107]. The Register's "alphabet soup" critique and UTCP's argument that wrapping plain APIs in MCP adds overhead and attack surface without necessity remain the strongest skeptical voices [107].
+### 8.3 Consolidation signals
+
+One foundation hosting the full agentic stack [8]; one certification [9]; **Agent Plugins 1.0.0** (2026-08-06) as a single packaging standard above MCP, with AWS, Cursor/Anysphere, Microsoft, OpenAI, and Vercel on its initial Technical Steering Committee [32, 33] (GitHub GA in VS Code, Copilot CLI, the Copilot SDK and app, Aug 12 [34]); OpenAI's Apps SDK migrating onto the cross-host MCP Apps standard ("build your UI once and run it in ChatGPT and other MCP Apps–compatible hosts") [35]; every major cloud shipping day-one `2026-07-28` support [12, 23]; SDK consolidation onto MCP v2 packages [11, 43]; A2A's IBM-ACP merger (Aug 2025) as precedent for convergence [31]. Commentary has shifted from "will MCP win?" to "what sits on top of MCP?" [166] — Atlassian's **AMP** (Oct 6–7) is the type specimen: a "diplomatic protocol" that, per its VP of AI Product, "is not a replacement for those protocols. Rather, it's a holistic layer on top of them" [40, 41].
+
+### 8.4 Fragmentation vectors that remain real
+
+**Shipping ahead of the spec:** ChatGPT's MCP Events support (DevDay, Sept 29 [45]) implements a webhook-only slice of a *proposed* specification whose WG has no accepted SEP [49, 155] — and the draft's subscription model has been sharply criticized (see §9). **UI extensions:** OpenAI keeps ChatGPT-specific capabilities (`window.openai`) deliberately outside the MCP Apps standard [35]. **State management:** reported as fragmented across "fourteen-plus vendors with zero shared protocols" (single-secondary; unverified count) [166]. **Packaging:** VS Code simultaneously supports Agent Plugins, Copilot, Claude, and legacy OpenPlugin formats [156]. **Transports:** non-standard WebSocket support persists in Claude Code and MS Agent Framework while the spec says stdio/Streamable-HTTP only [68, 69, 67]. **The v1/v2 SDK split** is a managed, but real, fragmentation of the installed base [43, 11]. And the registry layer has factual duplication: four-plus same-named "MCP registries" from JFrog [108], AWS [109], Workato [110], and GitHub [59], none of them the official one — which itself remains in preview [100].
 
 ---
 
 ## 9. Criticisms and Open Problems
 
-1. **Many-tools scaling.** The best-quantified criticism: Microsoft Research's survey of 1,470 MCP servers found most expose ≤4 tools, but the largest exposes 256 and GitHub's server exposes 91; across 2,443 tool calls the median output was 98 tokens versus a mean of 4,431, and the single worst tool averaged 557,766 tokens; tool-calling performance drops as tool count rises (up to 85% for some models — a figure MSR attributes to an external study, arXiv:2505.10570, not independently verified here) [106]. Progressive discovery (roadmap) [22] and Tool Search (Anthropic) [121] are the responses in flight.
-2. **Migration burden from the stateless rewrite.** The 2026-07-28 spec is backward-incompatible; custom implementations must rework session/state handling, MRTR, and auth flows during the ≥12-month deprecation windows [3, 12]. Early adoption is visible (GitHub MCP Server, 2026-07-23, including removal of Redis-backed sessions) [65], and the maintainers acknowledge the "uplift" for home-grown implementations [110], but broad ecosystem compliance is unmeasured.
-3. **Directory-count inflation and unverifiable scale claims.** Headline server counts vary roughly 3× to 11× depending on the pair (the extreme pair being Glama 77,817 vs Smithery 6,798); the one independent verified catalog suggests the underlying reality is far smaller than listing counts [73, 74, 75, 76].
-4. **Registry immaturity.** Preview status with possible data resets [18], no self-published totals [73], no unpublish support, immutable published versions [21], limited moderation with curation delegated to aggregators [20].
-5. **Security adoption lag.** Attacks target implementations and the supply chain, not just the spec; guidance exists [28, 94, 96] but adoption is uneven [90, 109].
-6. **Web/desktop/mobile asymmetry.** ChatGPT custom MCP remains an admin/web-settings flow [34, 36]; consumer Gemini desktop has nothing documented [42]; mobile is remote-connector-only [31]; OS-level integration exists only on Windows (preview) [53].
+1. **Subscriptions-as-credentials (WorkOS, Oct 2026) [49]:** the draft MCP Events spec makes an event subscription a durable credential — created under one user's token, authorizing the server to push that user's data indefinitely (re-verification is only a SHOULD; the binding tuple includes no token/scopes/expiry; `ttlMs: null` permits no expiry; subscription state lives client-side, on OpenAI's side of the wire for ChatGPT plugins) [49]. "The TTL you grant is your revocation window" [49].
+2. **The stdio command-injection design dispute** (April 2026, above [132, 133]) — unresolved by design; Anthropic holds it is a secure default with developer responsibility [132].
+3. **Many-tools context scaling** — the roadmap concedes it in its own words and funds "progressive discovery" [65, 66]; Anthropic engineers around it (MCP tool search; 25k-token output caps with file spillover) [76]. The quantified anchor from edition 1 (Microsoft Research's 1,470-server survey) is carried forward as previously verified, not re-fetched this edition.
+4. **Server quality and enterprise gaps** — no standard granular authorization ("allow X but not Y"), inconsistent community-server quality, missing distributed observability (2026 ecosystem maps) [161].
+5. **Registry immaturity** — the official registry's preview banner and the absence of GA while it carries ~41,000 entries [100, 102, 11]; discovery for quality (vs mere existence) remains unsolved; the directory layer disagrees with itself by methodology [114].
+6. **Supply-chain integrity** — the JLS findings (§7.2) are the sharpest statement: fixes that exist upstream but never reach the artifacts people actually install (mirrors, forks, stale catalog images) [25].
 
 ---
 
 ## 10. Recommendations for Adopters
 
-1. **Build servers remote-first on Streamable HTTP**, OAuth 2.1 with RFC 8707 audience binding, and CIMD [3, 4, 27]; target the 2026-07-28 spec but keep a compatibility story for handshake-era clients during the migration window [3, 12].
-2. **Do not adopt newly deprecated features** (Roots, Sampling, Logging, HTTP+SSE, DCR); migrate existing uses within the twelve-month windows [3, 12].
-3. **Treat every third-party MCP server as untrusted code**: pin/hash tool definitions [88, 96], scan descriptions [88], scope credentials narrowly, and never pass tokens through [27, 28]. Prefer curated/verified catalogs (Docker, enterprise registries) over open directories [71, 78, 79].
-4. **Gate MCP traffic** through a gateway or management plane (Docker, Kong, Cloudflare, Azure APIM, AWS, Composio) for auth, allowlisting, and observability [71, 82, 59, 85, 79, 84].
-5. **Design for progressive discovery** and small tool surfaces; avoid exposing large flat tool lists to models [106, 22].
-6. **Track the Tasks extension and webhooks/channels workstream** if you need long-running operations today [10, 22].
-
-*(These recommendations synthesize the cited guidance and roadmap; they are inferences, not vendor-endorsed doctrine.)*
+1. **Target the `2026-07-28` stateless revision for new remote servers** [2] — every major cloud platform now supports it [12, 23], gateways are being built around its headers and cacheability [11], and the deprecated features (sessions, SSE resumability, Roots/Sampling/Logging) are on a clock [2]. Build on SDK v2 packages where available (TypeScript, Python) [11]; pin v1 only with a migration plan (six-month critical-fix window is already running) [43].
+2. **Treat local servers as supply chain, not configuration.** Require package-ownership signals (namespace verification [104], signed images [113]), prefer containerized/isolated execution (ToolHive [159], Docker Gateway [111], OS sandboxes [94]), and audit what a one-click install actually spawns. The JLS data says the vulnerable artifact is often one hop away from the fixed one [25].
+3. **Assume the caller is an agent.** Deploy the enterprise patterns that now exist: Enterprise-Managed Authorization + ID-JAG via your IdP [58], per-tool policy at a gateway [11], DPoP-bound tokens as SDK support lands [65], short TTLs everywhere — and refuse unbounded event subscriptions (`ttlMs: null`) until the Triggers & Events SEP lands [49].
+4. **Consume registries via aggregators; verify before install.** The official registry is preview-grade infrastructure with real scale [100]; treat its `server.json` as a claim, not a vetting [105]. Curated tiers (Docker-verified [113], Anthropic Verified [135]) are functional checks, not security audits.
+5. **Plan for December 15.** The release cadence is now firm [5]; the three most likely disruptive areas are triggers/events, the tool-result shape redesign, and caching/ETag semantics [66]. SEP-3398's cycle means betas ~1.5 months before — put conformance testing in place now [153].
+6. **Design UIs against MCP Apps, not vendor SDKs,** if cross-host reach matters [35] — but expect host-specific extension layers to persist and abstract for them [17].
 
 ---
 
 ## 11. Open Questions (unresolved by available evidence)
 
-- When does the **official Registry** reach GA, and will it publish authoritative counts? (No GA milestone as of 2026-08-25 [18, 19].)
-- **Gemini Enterprise MCP connector status** — GA or Public Preview? (Conflicting official pages [43, 44].)
-- How quickly does the **installed base adopt 2026-07-28**? No published compliance telemetry exists yet.
-- Does the A2A→AAIF move produce real **MCP/A2A interop patterns**, or coexistence only? [115, 116]
-- Will **WebSocket** ever become standard, or does "HTTP over stdio" fully absorb the use cases? (SEP-1288 still in review [13]; roadmap says HTTP-native [22].)
-- Actual **unique active server count** — no methodology-verified number exists [73, 75].
-- MCP registry counts and client counts are moving targets; all figures in this paper carry their as-of dates.
+1. Will the **Triggers & Events SEP** land in the December 15 release [153], and will ChatGPT's shipped webhook slice be reconciled with the draft it preempted [49]?
+2. Will the **official registry reach GA** — and when? Its scale (~41k entries [11]) has far outgrown its "breaking changes may occur" label [100].
+3. Does **agentproto** charter successfully [37], and does MCP bind to it, stay parallel, or ignore it?
+4. Do **AMP-style governance layers** multiply into a real fragmentation layer above MCP [39], and does Agent Plugins absorb the proprietary plugin formats [156]?
+5. When do **Roots/Sampling/Logging** actually cross from deprecated to removed [2], and what replaces sampling for server-side LLM access?
+6. Does the fix-propagation failure (mirrors, forks, stale images) get an ecosystem answer (registry-level "fixed-after" signals, catalog rebuild guarantees), or does it stay each-consumer's problem [25]?
+7. What is the real **enterprise production number**? The best survey (Stacklok, ~41% [143]) predates the stateless-spec wave; no fresher primary exists as of this edition.
 
 ---
 
 ## 12. Conclusion
 
-MCP in August 2026 is a young protocol that has already been through a standard's-worth of history: invented by one vendor [1], adopted by its competitors [9, 112], neutralized into a Linux Foundation home [15, 17], and rewritten for stateless, HTTP-native operation at enterprise scale [2, 3]. Its support surface now spans desktop apps, IDEs, an OS layer, web platforms, headless APIs, and first-party API servers from major SaaS vendors (§5). The trajectory — tasks toward core, webhooks, agent identity, progressive discovery, conformance tooling [22] — reads like deliberate maturation toward production infrastructure. The honest counterweights are a breaking migration in progress [3, 110], a supply chain still dominated by unverified directories [73, 74, 75, 76], quantified scaling problems [106], and security that depends more on implementation discipline than on the spec [90, 109, 28]. For adopters, MCP is now the rational default at the agent-to-tools boundary — approached with gateway governance, narrow trust, and an eye on the deprecation clock.
+Edition 1 (August 2026) described MCP as a de facto standard consolidating under neutral governance. Edition 2's finding is that the consolidation phase is effectively over at the protocol layer — and everything interesting has moved up. The specification is stable, stateless, and on a metronome (December 15) [5]. The foundation hosts the whole agentic stack and certifies competence in it [8, 9]. The registries hold forty thousand-plus servers [10, 11, 12, 13], two thirds of them reachable without installing anything [11, 12, 13]. Every major platform — including, as of this edition, consumer Google [19, 20] — speaks MCP. Meanwhile the real risks have crystallized exactly where maturity is lowest: not in the protocol's design, but in the path a fix takes from a maintainer's commit to the artifact running in your environment [25], and in the identity of the non-human caller that the protocol was never designed to authenticate [65]. The next twelve months will be decided less by spec revisions than by whether the ecosystem industrializes trust the way it just industrialized transport.
 
 ---
 
----
+## Verification Adjustments
 
-<details>
-<summary><strong>Verification log — corrections made during citation and review passes</strong></summary>
+Citation and verification pass, 2026-10-09. All parenthetical source hints were replaced with numbered citations; the consolidated Sources section below carries 167 verified entries. Roughly 95 URLs were independently re-fetched and content-matched during this pass; the remainder were fetched and recorded same-day by the edition's research passes (T1–T4) and are marked accordingly in the research files.
 
-## Removed Unsupported Claims and Verification Adjustments
+**Corrections made (11):**
 
-The following changes were made during citation verification (all source URLs fetched 2026-08-25):
+1. **agentproto BoF location (meaning-changing):** draft said IETF 126 was in *Madrid*; the fetched BoF minutes state the meeting was held in **Vienna** on July 23, 2026. Corrected in §8.2 [36].
+2. **agentproto charter scope (meaning-changing):** draft said "MCP is not named in the charter"; the fetched charter **does name MCP** (with A2A) as example protocols the baseline is designed to be usable alongside via extension points. §8.2 now reports this accurately while keeping the finding that agentproto is not an MCP working group [37].
+3. **Agent Plugins signatories (claim removed):** draft said Google joined as core maintainer on day one; the Vercel and AWS announcements list the initial TSC as AWS, Cursor, Microsoft, OpenAI, and Vercel, with no Google mention. The Google clause was removed from §8.3 [32, 33, 34].
+4. **Registry v1.8.x fix attribution:** the org-namespaces-restricted-to-Owners fix shipped in **v1.8.0**, not v1.8.1; v1.8.1 carries the `github.io` domain-rejection fix. §5.8 corrected per the releases page [103].
+5. **Cloudflare "billions of tool calls" (scope narrowed):** the figure is reported by Cloudflare for its Code Mode MCP server for its own API, not "its MCP infrastructure" generally. §6.4 narrowed accordingly [24].
+6. **Gemini Enterprise GA date pinned:** the release-notes entry declaring custom MCP server data stores GA is dated **2026-08-07** (research notes had it only as "between 2026-07-22 and 2026-08-06"). §2.8/§5.4 updated [22].
+7. **Dead URL replaced:** Microsoft Learn's M365 Copilot MCP-apps page moved from `/extensibility/mcp-apps` (now 404) to **`/extensibility/plug-in-mcp-apps`** (`https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/plugin-mcp-apps`); content confirmed at the new slug [17].
+8. **Skills SEP-2640 status strengthened:** the draft's "appears as Final per secondary reporting" is upgraded — the SEP index (primary, fetched) lists SEP-2640 as **Final (2026-04-23)**; secondary reporting is retained only for the September announcement date [57, 72].
+9. **SEP-1288 closure nuance:** the issue page attributes the stall to Transports WG queue/gridlock with browser-auth limits raised in early discussion; §4.3 wording softened accordingly [163].
+10. **Atlassian MCP-server scale figure:** SiliconANGLE independently repeats the "~15 million daily tool calls" figure, so it now has two secondary sources — still unconfirmed on Atlassian primary pages, and still flagged as such in §6.4 [42, 166].
+11. **Carry-forwards flagged rather than silently kept:** GitHub MCP Server remote-GA date (2025-09-04) and the npm `postmark-mcp` canonical example are edition-1 findings not re-verified this edition; both are now explicitly marked in §5.7 and §7.1.
 
-1. **Updated directory counts.** Glama's live counter read 77,817 servers / 14,547 connectors (was 77,243/14,397 in the draft) [74]; Smithery's directory read 6,798 servers (was 6,551) [76]. Both are moving counters.
-2. **Recharacterized the "8,433 unique servers" claim.** The source presents 8,433 as Skillselion's own verified-catalog total and explicitly "a floor," not a cross-directory deduplication estimate; the draft's "independent deduplication census estimates only ~8,400 unique servers" framing was corrected accordingly [75].
-3. **Removed "PulseMCP lists 555 MCP-capable clients."** PulseMCP's statistics/client pages returned HTTP 403 and the figure could not be verified.
-4. **Corrected SEP-1288 status.** The draft said the WebSocket SEP was "closed as dormant"; the live GitHub issue shows status "in-review" (sponsored), i.e., still an unaccepted proposal [13]. The substantive claim (WebSocket is not a standard transport) is carried by the spec itself [4].
-5. **Removed the VS Code caveat** that the built-in local Copilot agent harness "reaches only local, no-auth servers." The cited agent-harnesses URL is 404, and the replacement page documents no such authentication limitation [46].
-6. **Removed "Claude Code can run as an MCP server."** Not present in the current Claude Code MCP reference; the row now lists its verified client transports (stdio, Streamable HTTP, SSE, WebSocket) [32].
-7. **Removed the Anthropic "Managed Agents" mention.** The platform documentation page could not be content-verified during this pass.
-8. **Removed "Anthropic Messages API connector: no stdio."** The connector's existence is kept [33]; the no-stdio parenthetical could not be verified against the page content.
-9. **Softened "OpenAI renamed connectors to apps (2025-12-17)."** The current help page no longer displays that dated note; it now describes a July 9, 2026 migration of the app directory into a Plugin directory [35]. The DevDay origin of apps (October 2025, built on MCP) is cited instead [117].
-10. **Removed the ChatGPT "March 2025 coming soon for desktop MCP" note** and replaced the "Developer Mode is web-only" assertion with what the help pages verify: registration is an admin/web workspace-settings flow, with full write actions in beta for Business/Enterprise/Edu [34, 36].
-11. **Removed unverified vendor-feature details:** Visual Studio's "built-in Microsoft Learn MCP server" (not on the VS page; the server itself is cited separately [70]); Semantic Kernel Python "can expose an MCP server"; Agent Framework "hosted MCP"; ADK "experimental agent-as-MCP-server export" (generalized to what the ADK docs state [64]); Shopify's "Dev MCP / Customer Accounts MCP" names (generalized [69]); Stripe's local `npx @stripe/mcp` CLI (not on the page [68]); Kong "Enterprise, Gateway 3.12+" (not on the page [82]); Higress "CNCF sandbox" (not on the page [83]); Cloudflare "stateless recommended," "2026-07-28 supported," and "operates managed MCP servers" (not on the cited page [58]).
-12. **Softened date precision where pages don't print dates:** AWS AgentCore Gateway expansion and Runtime stateful MCP client now cited as "2026" (the 2026-06-01 / 2026-04-09 dates were not printed on the pages) [56, 57]; JFrog MCP Registry GA cited without a day-precision date [78]; Invariant's tool-poisoning disclosure cited as "April 2025" rather than 2025-04-01 [86]; CATALIST BoF described by its Datatracker status ("Not WG Forming") rather than "concluded" [111]; IETF 125 / 2026-06-11 status details dropped as unverifiable from the fetched page.
-13. **Removed GA/preview labels not printed on cited pages** (Copilot Studio "GA"; Foundry consumption "GA" — replaced with the page's own framing, including "long-running MCP operations are in preview" [55]; Gemini Enterprise Agent Platform endpoint kept as "serves a remote MCP server" [45]).
-14. **Replaced dead/forbidden source URLs:** support.anthropic.com remote-MCP article (HTTP 404) → support.claude.com custom connectors article [31]; Axios A2A→AAIF report (HTTP 403) → AAIF blog announcement [116]; google-a2a.github.io A2A-and-MCP topic (HTTP 404) → a2a-protocol.org page [115]; plan.modelcontextprotocol.io matrix (unextractable) dropped in favor of the SDK docs and GA post [26, 2].
-15. **Aligned quotes with source wording:** UTCP's critique rephrased to "overhead and attack surface" per The Register's wording [107]; M365 federated connectors' "[Web]" release-note tag removed (unverified), keeping the MCP real-time-fetch fact [39].
-16. **Miscellaneous:** "fifth revision" corrected to "fifth published version" (the version chain is initial + four revisions) [3, 6, 7, 8]; Uber's headline execution numbers explicitly attributed to AAIF secondary reporting [98, 99]; the roadmap's "updated 2026-08-22" date metadata dropped as unverified.
+**Documented conflicts preserved (not resolved):** (a) HTTP+SSE offramp — release blog "year-long offramp" [4] vs deprecated-features registry ~3 months per secondary analysis [160]; (b) Ruby SDK Tier 1 on the current SDK page [124] vs the 1.0 announcement's "meets every Tier 2 requirement" [125]; (c) ChatGPT developer-mode scope — developer docs (Pro/Plus/Business/Enterprise/Education on web) [16] vs help center (beta for Business/Enterprise/Edu; Pro/Plus read-only) [77]; (d) Smithery 14,161 as-displayed [116] vs 25k+ homepage claims [115, 11] vs ~18.3–19.2k API totals [115, 13, 114]. All conflicting counts are reported side-by-side and none were averaged.
 
-### Post-Review Revisions (round 2, applied 2026-08-25)
+**URLs that could not be fetched directly (content corroborated through other channels):** help.openai.com and developers.openai.com developer-mode pages (bot-blocked 403/404 on direct fetch; full text confirmed verbatim via search extraction), NVD CVE pages (JavaScript-rendered; corroborated via CISA and Rapid7), Microsoft's techcommunity security blog (JavaScript-rendered), Bloomberg company story and Techzine (403; corroborated via Glama's case-study write-up and SiliconANGLE), OpenAI's DevDay recap (403; corroborated via ChatGPT Learn/InfoQ/MCPJam per the research notes), and PulseMCP (403, unchanged since August 2025). PDF-only sources were cited but not fetched or parsed, per house rules: the Stacklok report [143], the NSA Cybersecurity Information Sheet [142], and OX Security's 30-page paper [132]. *(Review-pass note: the Stacklok PDF was subsequently parsed during the independent review — see the post-review revisions below.)*
 
-An independent review pass (30 of 123 sources re-fetched; all sampled load-bearing claims matched) returned no fatal findings, two major, and ten minor. All were addressed:
+### Post-Review Revisions (2026-10-09)
 
-1. **(W1)** Executive Summary no longer states "the first documented malicious MCP server" as fact; the primacy characterization is now attributed to Koi Security in both places it appears.
-2. **(W2)** The +73% growth figure is now labeled as cross-source (two different secondary observers of PulseMCP, five months apart) and flagged as not guaranteed like-for-like.
-3. **(W3)** "This is the first OS-level MCP integration from a major OS vendor" replaced with the hedge "No comparable OS-level MCP integration from another major OS vendor is documented as of this writing."
-4. **(W4)** The postmark-mcp attack is described as same-name npm impersonation (Koi's own characterization), not typosquatting.
-5. **(W5)** The 2025-03-26 timeline row no longer presents a community forum thread as evidence of OpenAI's adoption; the Agents SDK documentation carries the fact and the thread is marked as supplementary color.
-6. **(W6)** "~10×" replaced with "roughly 3× to 11× depending on the pair."
-7. **(W7)** The 24,240 census method note now matches the source's described method (794-page pagination, 79,341 version records deduplicated) instead of an unverified `version=latest` parameter detail.
-8. **(W8)** The registry "not designed for self-hosting" claim is reconciled with the README's contributor workflows.
-9. **(W9)** Propel's "first production MCP for PLM" is marked vendor-reported.
-10. **(W10)** The 85% degradation figure is attributed to the external study MSR cites (arXiv:2505.10570), with a not-independently-verified note.
-11. **(W11)** The header no longer claims blanket re-verification of all URLs; limitations are pointed to.
-12. **(W12)** The A2A→AAIF announcement date is presented as August 2026 (press-dated 2026-08-17), with the AAIF page's missing publish date disclosed.
+The independent review pass (report: `outputs/.drafts/state-of-mcp-v2-verification.md`; verdict **PASS WITH NOTES** — 0 FATAL, 4 MAJOR, 4 MINOR) re-fetched ~50 sources, replicated the registry census (41,211 vs this paper's 41,183 — same-day drift), and audited the CISA KEV feed and GitHub APIs. Its findings were applied as follows:
+
+1. **[W1·MAJOR] CISA KEV "first entries" claim removed.** The Executive Summary said MCP's "first entries" into KEV were LiteLLM CVE-2026-59822 and Starlette CVE-2026-48710 (both 2026-09-02). The KEV feed shows **LiteLLM CVE-2026-42271 was added 2026-06-08** — three months earlier. Exec Summary rewritten: LiteLLM appears twice on KEV (June and September 2026) [168].
+2. **[W2·MAJOR] Growth percentage corrected and baseline source restored.** "~65% in about six weeks" was arithmetically wrong: 24,240 (jwatte.com census, 2026-08-22) → 41,183 is **+69.9%**. Now stated as ≈70% with the baseline attributed and jwatte.com added as source [169]; the §6.1 PulseMCP-row echo and the growth-anchor sentence corrected accordingly.
+3. **[W3·MAJOR] Microsoft MCP Gateway characterization updated.** The repo was rewritten for the stateless spec (README, by ~2026-10-02: requires `2026-07-28` clients; no transport-session storage), so the earlier "session-aware stateful routing" tension claim was stale — the quote traced to an analyst snapshot that predated the rewrite. §6.3 now reports the rewrite as further evidence of vendors re-platforming onto the stateless core [158].
+4. **[W4·MAJOR] Stacklok survey cohort corrected.** The chart's 41% (29% limited / 12% broad) is the **All-respondents** column, not "software organizations"; software respondents read 45% (26% / 19%). §6.4 restated; the PDF was parsed during review (previously "parsing blocked") [143].
+5. **[W6/W7·MINOR]** §6.1 now notes gravity.fast's Nov-2025 month-end figure (927) differs in measure from the maintainers' "close to two thousand"; the Atlassian scale figure is flagged as having two independent secondary confirmations (Forkast, SiliconANGLE), still without primary confirmation [42, 166].
+
+All four documented conflicts remain preserved side-by-side; no counts were averaged; announced-vs-shipped distinctions are unchanged.
 
 ---
-
-</details>
-
-<details>
-<summary><strong>Sources (123)</strong></summary>
 
 ## Sources
 
-All URLs fetched and verified 2026-08-25. Directory counters are point-in-time values and move continuously.
+All URLs accessed 2026-10-09. Items marked below were verified by direct fetch during this pass; the rest were fetched and recorded on 2026-10-09 by the research passes (T1–T4) cited in each entry's claim map.
 
-1. Anthropic — Introducing the Model Context Protocol (November 2024). https://www.anthropic.com/news/model-context-protocol
-2. MCP Blog — "The 2026-07-28 Specification" (GA release post). https://blog.modelcontextprotocol.io/posts/2026-07-28/
-3. MCP Specification — Key Changes, 2026-07-28. https://modelcontextprotocol.io/specification/2026-07-28/changelog
-4. MCP Specification — Transports Overview, 2026-07-28. https://modelcontextprotocol.io/specification/2026-07-28/basic/transports
-5. MCP Specification — Index, 2024-11-05 (architecture, primitives, LSP inspiration). https://modelcontextprotocol.io/specification/2024-11-05/index
-6. MCP Specification — Key Changes, 2025-03-26. https://modelcontextprotocol.io/specification/2025-03-26/changelog
-7. MCP Specification — Key Changes, 2025-06-18. https://modelcontextprotocol.io/specification/2025-06-18/changelog
-8. MCP Specification — Key Changes, 2025-11-25. https://modelcontextprotocol.io/specification/2025-11-25/changelog
-9. MCP Blog — "One Year of MCP" (2025-11-25). https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/
-10. SEP-2663 — Tasks Extension (Final). https://modelcontextprotocol.io/seps/2663-tasks-extension
-11. SEP-2133 — Extensions (Final). https://modelcontextprotocol.io/seps/2133-extensions
-12. MCP Community — Feature Lifecycle and Deprecation Policy. https://modelcontextprotocol.io/community/feature-lifecycle
-13. GitHub Issue #1288 — SEP-1288: WebSocket Transport for MCP (status: in-review). https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1288
-14. MCP Blog — "Governance for MCP" (2025-07-31). https://blog.modelcontextprotocol.io/posts/2025-07-31-governance-for-mcp/
-15. Anthropic — "Donating the Model Context Protocol and establishing of the Agentic AI Foundation" (2025-12-09). https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation
-16. MCP Blog — "MCP joins the Agentic AI Foundation" (2025-12-09). https://blog.modelcontextprotocol.io/posts/2025-12-09-mcp-joins-agentic-ai-foundation/
-17. Linux Foundation — "Linux Foundation Announces the Formation of the Agentic AI Foundation" (2025-12-09). https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation
-18. MCP Blog — "Introducing the MCP Registry" (preview, 2025-09-08). https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/
-19. GitHub — MCP Registry README (API freeze v0.1, 2025-10-24). https://github.com/modelcontextprotocol/registry
-20. MCP Registry — About. https://modelcontextprotocol.io/registry/about
-21. MCP Registry — FAQ (no unpublish; immutable versions). https://modelcontextprotocol.io/registry/faq
-22. MCP — Development Roadmap (August 2026, five priority areas). https://modelcontextprotocol.io/development/roadmap
-23. MCP Blog — MCP Roadmap 2026 (four priority areas). https://blog.modelcontextprotocol.io/posts/2026-mcp-roadmap/
-24. MCP Blog — "MCP Apps are now live as an official MCP extension" (2026-01-26). https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/
-25. MCP Blog — "Enterprise-Managed Authorization" (stable extension; ID-JAG). https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/
-26. MCP Docs — SDKs (2026-07-28; ten SDKs and tiers). https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/docs/2026-07-28/sdk.mdx
-27. MCP Spec (repo) — Authorization Security Considerations, 2026-07-28. https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/authorization/security-considerations.mdx
-28. MCP Docs (repo) — Security Best Practices tutorial, 2026-07-28. https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/docs/2026-07-28/tutorials/security/security_best_practices.mdx
-29. MCP Spec (repo) — Transports, 2025-03-26 (DNS rebinding warning). https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-03-26/basic/transports.mdx
-30. Claude Support — Getting Started with Local MCP Servers on Claude Desktop (Desktop Extensions, `.mcpb`). https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop
-31. Claude Support — Get started with custom connectors using remote MCP. https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
-32. Claude Code Docs — MCP reference. https://code.claude.com/docs/en/mcp
-33. Anthropic Docs — MCP connector (Messages API). https://docs.anthropic.com/en/docs/agents-and-tools/mcp-connector
-34. OpenAI Help — Developer mode and full MCP connectors in ChatGPT. https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt
-35. OpenAI Help — Apps (connectors) in ChatGPT (plugin directory migration, July 9, 2026). https://help.openai.com/en/articles/11487775-connectors-in
-36. OpenAI Help — Build with the Apps SDK. https://help.openai.com/en/articles/12515353-build-with-the-apps-sdk
-37. OpenAI Platform — Remote MCP tools in the Responses API. https://platform.openai.com/docs/guides/tools-remote-mcp
-38. OpenAI Agents SDK (Python) — MCP. https://openai.github.io/openai-agents-python/mcp/
-39. Microsoft Learn — Microsoft 365 Copilot connectors overview (federated connectors use MCP). https://learn.microsoft.com/en-us/microsoft-365/copilot/connectors/overview
-40. Microsoft Learn — Agent Builder in Microsoft 365 Copilot. https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/agent-builder
-41. Microsoft Learn — Copilot Studio: extend agents with MCP. https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp
-42. Google Support — Gemini app for Mac (no MCP mentioned). https://support.google.com/gemini/answer/17011627
-43. Google Cloud — Gemini Enterprise release notes (custom MCP server connectors GA, disabled by default; 2026-08-07). https://docs.cloud.google.com/gemini/enterprise/docs/release-notes
-44. Google Support — Gemini Enterprise Business: custom MCP servers (Pre-GA terms; StreamableHTTP only). https://support.google.com/g/answer/17106276
-45. Google Cloud — Gemini Enterprise Agent Platform remote MCP server. https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/use-agent-platform-mcp
-46. VS Code Docs — MCP configuration reference. https://code.visualstudio.com/docs/agents/reference/mcp-configuration
-47. Microsoft Learn — Use MCP servers in Visual Studio 2022 17.14+ / Visual Studio 2026. https://learn.microsoft.com/en-us/visualstudio/ide/mcp-servers?view=visualstudio
-48. JetBrains Blog — IntelliJ IDEA 2025.1: Model Context Protocol support. https://blog.jetbrains.com/idea/2025/05/intellij-idea-2025-1-model-context-protocol/
-49. JetBrains Help — IntelliJ IDEA MCP Server (bundled plugin, 2025.2). https://www.jetbrains.com/help/idea/mcp-server.html
-50. Cursor Docs — MCP. https://prod.cursor.com/docs/mcp
-51. Windsurf Docs — MCP servers in Cascade (Devin Desktop). https://docs.windsurf.com/windsurf/cascade/mcp
-52. Zed Docs — MCP. https://zed.dev/docs/ai/mcp
-53. Windows Insider Blog — Build 26220.7344 (Windows on-device registry for MCP, preview). https://blogs.windows.com/windows-insider/2025/12/05/announcing-windows-11-insider-preview-build-26220-7344-dev-beta-channels/
-54. Microsoft Learn — Register MCP servers with the Windows On-Device Registry (`odr.exe`). https://learn.microsoft.com/en-us/windows/ai/mcp/servers/mcp-manual
-55. Microsoft Learn — Microsoft Foundry agents: Model Context Protocol tools. https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/model-context-protocol
-56. AWS ML Blog — Extending MCP support for Amazon Bedrock AgentCore Gateway. https://aws.amazon.com/blogs/machine-learning/extending-mcp-support-for-amazon-bedrock-agentcore-gateway-2/
-57. AWS ML Blog — Introducing stateful MCP client capabilities on Amazon Bedrock AgentCore Runtime. https://aws.amazon.com/blogs/machine-learning/introducing-stateful-mcp-client-capabilities-on-amazon-bedrock-agentcore-runtime/
-58. Cloudflare Docs — Agents: Model Context Protocol. https://developers.cloudflare.com/agents/model-context-protocol/
-59. Cloudflare Docs — MCP server portals (Cloudflare One). https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/mcp-portals/
-60. LangChain Docs — MCP (langchain-mcp-adapters). https://github.com/langchain-ai/docs/blob/main/src/oss/langchain/mcp.mdx
-61. LangSmith Docs — LangGraph Agent Server MCP. https://docs.langchain.com/langsmith/server-mcp
-62. Microsoft Learn — Agent Framework: local MCP tools. https://learn.microsoft.com/en-us/agent-framework/agents/tools/local-mcp-tools
-63. Microsoft Learn — Semantic Kernel: adding MCP plugins. https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/adding-mcp-plugins
-64. Google ADK Docs — MCP (client use and exposing ADK tools via MCP). https://github.com/google/adk-docs/blob/main/docs/mcp/index.md
-65. GitHub Blog — GitHub MCP Server supports the next MCP specification (2026-07-23). https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/
-66. GitHub Blog — GitHub MCP Server public preview (2025-04-04). https://github.blog/changelog/2025-04-04-github-mcp-server-public-preview/
-67. GitHub Blog — Remote GitHub MCP Server is now generally available (2025-09-04). https://github.blog/changelog/2025-09-04-remote-github-mcp-server-is-now-generally-available/
-68. Stripe Docs — MCP (hosted `https://mcp.stripe.com`, OAuth). https://docs.stripe.com/mcp
-69. Shopify Dev — Storefront MCP. https://shopify.dev/docs/apps/build/storefront-mcp/index
-70. GitHub — Microsoft Learn MCP Server. https://github.com/microsoftdocs/mcp
-71. Docker Docs — Docker MCP Catalog & Toolkit (300+ verified servers; invite-only MCP Gateway). https://docs.docker.com/ai/mcp-catalog-and-toolkit/
-72. Docker Blog — Announcing Docker MCP Catalog and Toolkit beta (May 2025). https://www.docker.com/blog/announcing-docker-mcp-catalog-and-toolkit-beta/
-73. Jan Wildeboer (jwatte.com) — MCP registry census (24,240 servers, 2026-08-22). https://jwatte.com/blog/mcp-servers-for-small-business/
-74. Glama — MCP server directory (77,817 servers / 14,547 connectors, 2026-08-25). https://glama.ai/
-75. Skillselion — "The MCP Server Census: 8,433 Servers" (2026-08-14; also reports PulseMCP's 22,070). https://skillselion.com/research/mcp-server-census-2026-08
-76. Smithery — MCP servers directory (6,798 servers, 2026-08-25). https://smithery.ai/servers
-77. SettleGrid — State of MCP 2026 (PulseMCP ~12,770 listings, March 2026). https://settlegrid.ai/learn/state-of-mcp-2026
-78. JFrog — General Availability of the JFrog MCP Registry. https://jfrog.com/blog/announcing-general-availability-of-the-jfrog-mcp-registry/
-79. AWS Open Source Blog — Governing AI assets at scale with MCP Gateway and Registry. https://aws.amazon.com/blogs/opensource/governing-ai-assets-at-scale-with-mcp-gateway-and-registry/
-80. GitHub — FastMCP (Prefect). https://github.com/PrefectHQ/fastmcp
-81. FastMCP Docs — Welcome (FastMCP 1.0 incorporated into the official SDK). https://gofastmcp.com/v2/getting-started/welcome
-82. Kong — AI MCP (AI MCP Proxy plugin). https://developer.konghq.com/mcp/
-83. Higress — AI gateway (MCP proxying / protocol conversion). https://higress.ai/
-84. Composio — MCP Gateway. https://composio.dev/mcp-gateway
-85. Microsoft Learn — Azure API Management MCP server overview (REST API as MCP server; API Center). https://learn.microsoft.com/en-us/azure/api-management/mcp-server-overview
-86. Invariant Labs — MCP Security Notification: Tool Poisoning Attacks (April 2025). https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
-87. Invariant Labs — MCP Security Notification (rug pulls). https://invariantlabs.ai/blog/mcp-security-notification
-88. Invariant Labs — Introducing MCP-Scan (tool pinning/hashing). https://invariantlabs.ai/blog/introducing-mcp-scan
-89. Trail of Bits — "Jumping the Line: How MCP servers can attack you before you ever use them" (2025-04-21). https://blog.trailofbits.com/2025/04/21/jumping-the-line-how-mcp-servers-can-attack-you-before-you-ever-use-them/
-90. Koi Security — "postmark-mcp" npm malicious backdoor ("world's first sighting of a real world malicious MCP server"). https://www.koi.ai/blog/postmark-mcp-npm-malicious-backdoor-email-theft
-91. Postmark — Information regarding the malicious postmark-mcp package. https://postmarkapp.com/blog/information-regarding-malicious-postmark-mcp-package
-92. Koi Security — "MCP malware wave continues: a remote shell in backdoor" (@lanyer640/mcp-runcommand-server, 2025-09-30). https://www.koi.ai/blog/mcp-malware-wave-continues-a-remote-shell-in-backdoor
-93. NVD — CVE-2025-54136 (Cursor trusted-config RCE; fixed in 1.3). https://nvd.nist.gov/vuln/detail/CVE-2025-54136
-94. Microsoft Security Blog — Understanding and mitigating security risks in MCP implementations. https://techcommunity.microsoft.com/blog/microsoft-security-blog/understanding-and-mitigating-security-risks-in-mcp-implementations/4404667
-95. Microsoft Learn — Configure the MCP firewall in Global Secure Access (preview). https://learn.microsoft.com/en-us/entra/global-secure-access/how-to-configure-mcp-firewall
-96. OWASP — MCP Security Cheat Sheet. https://cheatsheetseries.owasp.org/cheatsheets/MCP_Security_Cheat_Sheet.html
-97. NSA — Cybersecurity Information Sheet: MCP Security (PDF; June 2026; full text not parsed). https://media.defense.gov/2026/Jun/02/2003943289/-1/-1/0/CSI_MCP_SECURITY.PDF
-98. Uber Engineering — Solving the agent identity crisis. https://www.uber.com/us/en/blog/solving-the-agent-identity-crisis/
-99. AAIF — How Uber runs 60,000 AI agent tasks per week with MCP. https://aaif.io/blog/how-uber-runs-60000-ai-agent-tasks-per-week-with-mcp
-100. AWS ML Blog — How Smartsheet built a remote MCP server on AWS. https://aws.amazon.com/blogs/machine-learning/how-smartsheet-built-a-remote-mcp-server-on-aws/
-101. Anthropic — Chronograph customer story (client-facing MCP server). https://claude.com/customers/chronograph
-102. MarsBased — Moody's AI (production MCP server; partner-reported). https://marsbased.com/work/moodys-ai
-103. Lean Innovation Labs — Fullcast case study (production launch, August 2025). https://www.leaninnovationlabs.com/case-studies/fullcast
-104. Propel — First to launch production MCP for PLM (June 2026). https://www.propelsoftware.com/news/first-to-launch-production-mcp-for-plm
-105. InfoQ — Cloud & DevOps Trends Report 2026 (MCP in "Early Majority"). https://www.infoq.com/articles/cloud-devops-trends-2026/
-106. Microsoft Research — "Tool-space interference in the MCP era" (1,470-server survey; token and tool-count statistics). https://www.microsoft.com/en-us/research/blog/tool-space-interference-in-the-mcp-era-designing-for-agent-compatibility-at-scale/
-107. The Register — "Deciphering the alphabet soup of agentic AI protocols" (2026-01-30; UTCP critique). https://www.theregister.com/special-features/2026/01/30/deciphering-the-alphabet-soup-of-agentic-ai-protocols/4802548
-108. The Register — Anthropic quietly fixed flaws in its Git MCP server (composition attacks; 2026-01-20). https://www.theregister.com/security/2026/01/20/anthropic-quietly-fixed-flaws-in-its-git-mcp-server/4676059
-109. The Register — Bug hunter tracks down three serious MCP database flaws, one left unpatched (2026-05-13). https://www.theregister.com/security/2026/05/13/bug-hunter-tracks-down-three-serious-mcp-database-flaws-one-left-unpatched/5238916
-110. The Register — "Model Context Protocol prepares to break with its stateful past" (2026-07-23). https://www.theregister.com/devops/2026/07/23/model-context-protocol-prepares-to-break-with-its-stateful-past/5276722
-111. IETF Datatracker — BoF Request: CATALIST (status "Not WG Forming"). https://datatracker.ietf.org/doc/bofreq-farrel-coordinating-agent-to-agent-list-of-efforts-catalist/00/
-112. Microsoft — Build 2025: "The age of AI agents and building the open agentic web" (2025-05-19). https://blogs.microsoft.com/blog/2025/05/19/microsoft-build-2025-the-age-of-ai-agents-and-building-the-open-agentic-web/
-113. Linux Foundation — A2A Protocol project launch (2025-06-23). https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents
-114. Linux Foundation — "A2A protocol surpasses 150 organizations…" (2026-04-09). https://www.linuxfoundation.org/press/a2a-protocol-surpasses-150-organizations-lands-in-major-cloud-platforms-and-sees-enterprise-production-use-in-first-year
-115. A2A Protocol — "A2A and MCP" (complementary; not a replacement). https://a2a-protocol.org/latest/
-116. AAIF — "A2A joins AAIF." https://aaif.io/blog/a2a-joins-aaif
-117. OpenAI — "Introducing apps in ChatGPT" (DevDay, October 2025). https://openai.com/index/introducing-apps-in-chatgpt/
-118. OpenAI Community — "Preparing for MCP in Responses" (opened 2025-03-27). https://community.openai.com/t/preparing-for-mcp-in-responses/1152972
-119. GitHub Blog — Agent Plugins 1.0 in VS Code, Copilot CLI, and the Copilot app (2026-08-12). https://github.blog/changelog/2026-08-12-agent-plugins-1-0-in-vs-code-copilot-cli-and-the-copilot-app/
-120. GitHub — Agent Plugins specification. https://github.com/agentplugins/agent-plugins-spec
-121. Anthropic — Engineering: advanced tool use (Tool Search; Programmatic Tool Calling). https://www.anthropic.com/engineering/advanced-tool-use
-122. Anthropic — Apple Xcode + Claude Agent SDK. https://www.anthropic.com/news/apple-xcode-claude-agent-sdk
-123. Cursor — Changelog 2.5 (plugins package skills, subagents, MCP servers, hooks, and rules). https://cursor.com/changelog/2-5
-
----
-
-*(Cited version. Every inline `[N]` resolves to the numbered Sources list above; every source is cited at least once. Claims that could not be anchored to a verifiable source were removed or softened and are itemized in "Removed Unsupported Claims and Verification Adjustments.")*
-
-</details>
+1. modelcontextprotocol Releases (GitHub) — https://github.com/modelcontextprotocol/modelcontextprotocol/releases
+2. MCP Specification — Key Changes, 2026-07-28 — https://modelcontextprotocol.io/specification/2026-07-28/changelog
+3. MCP Specification — draft changelog (empty as of 2026-10-09) — https://modelcontextprotocol.io/specification/draft/changelog
+4. MCP Blog — "The 2026-07-28 Specification" — https://blog.modelcontextprotocol.io/posts/2026-07-28/
+5. GitHub Discussion #3257 — "MCP Core Maintainer Meeting - August 12, 2026" — https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/3257
+6. Anthropic — "Donating the Model Context Protocol and establishing the Agentic AI Foundation" (2025-12-09) — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation
+7. Linux Foundation press — "Announces the Formation of the Agentic AI Foundation" (2025-12-09) — https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation
+8. AAIF — Projects (six hosted projects) — https://aaif.io/projects
+9. Linux Foundation press — "Agentic AI Foundation Launches MCPA Certification" (2026-09-14) — https://www.linuxfoundation.org/press/agentic-ai-foundation-launches-mcpa-certification-to-validate-mcp-expertise
+10. Official MCP Registry API — `/v0/servers` (this edition's census: 41,183 unique latest-version servers, 40,676 active / 507 deprecated, 412 pages, run 2026-10-09) — https://registry.modelcontextprotocol.io/v0/servers
+11. Ajay Kumar — "MCP in 2026: 475M SDK Downloads a Month, 39,492 Servers in a Registry Still in Preview, and 12 Gateways…" — https://www.ajayk.sh/blog/mcp-ecosystem-2026-registry-gateways-enterprise/
+12. host0.ai — "State of MCP 2026: adoption, security and the stateless spec" — https://host0.ai/blog/state-of-mcp-2026
+13. gravity.fast — MCP Adoption Statistics (daily tracker) — https://gravity.fast/data/mcp-adoption-statistics/
+14. Claude Help Center — "Get started with custom connectors using remote MCP" — https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
+15. OpenAI Help Center — "Apps in ChatGPT" (Plugins Directory migration, 2026-07-09) — https://help.openai.com/en/articles/11487775-connecting-mcp-servers-to-chatgpt (bot-blocked on direct fetch; text verified via search extraction)
+16. OpenAI Developers — "ChatGPT Developer mode" — https://developers.openai.com/api/docs/guides/developer-mode (bot-blocked on direct fetch; text verified via search extraction)
+17. Microsoft Learn — "MCP apps in Microsoft 365 Copilot" (URL moved from /extensibility/mcp-apps; replaced 2026-10-09) — https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/plugin-mcp-apps
+18. Microsoft Learn — "Connect your agent to an existing MCP server" (Copilot Studio) — https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-add-existing-server-to-agent
+19. Google Gemini Apps Help — "Connect & manage custom apps for Gemini Spark (MCP)" — https://support.google.com/gemini/answer/17209137
+20. Google blog — "The Gemini app becomes more agentic" (Spark, MCP connections, macOS app) — https://blog.google/innovation-and-ai/products/gemini-app/next-evolution-gemini-app/
+21. Google Workspace Updates — "Connect to more tools with Gemini in Google Workspace" (2026-09) — https://workspaceupdates.googleblog.com/2026/09/connect-to-more-tools-with-gemini-in-Google-Workspace.html
+22. Google Cloud — Gemini Enterprise release notes — https://docs.cloud.google.com/gemini/enterprise/docs/release-notes
+23. AWS Docs — AgentCore Gateway: using the gateway — https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway-using.html
+24. Cloudflare blog — "The next generation of MCP" (2026-08-06) — https://blog.cloudflare.com/mcp-v2/
+25. JLS Technology — "Fixed Upstream, Still Vulnerable Downstream: How MCP Security Fixes Propagate" (2026-10-09) — https://jlstech.com/mcp-remediation-propagation-2026/
+26. CISA alert — "CISA Adds Seven Known Exploited Vulnerabilities to Catalog" (2026-09-02) — https://www.cisa.gov/news-events/alerts/2026/09/02/cisa-adds-seven-known-exploited-vulnerabilities-catalog
+27. Rapid7 — CVE-2026-77244 (mcp-atlassian, CVSS 10.0) — https://www.rapid7.com/db/vulnerabilities/cve-2026-77244/
+28. Ars Technica — "Vulnerability in agents from Google and others exposes structural flaw in MCP" (2026-10-05) — https://arstechnica.com/security/2026/10/vulnerability-in-agents-from-google-and-others-exposes-structural-flaw-in-mcp/
+29. WorkOS — "Three MCP auth bugs in 30 days, one root cause" (2026-10-02) — https://workos.com/blog/mcp-auth-bugs-trusting-the-other-side
+30. Cloudflare Docs — "Build: Remote MCP server" (Agents) — https://developers.cloudflare.com/agents/model-context-protocol/guides/remote-mcp-server/
+31. AAIF Blog — "A2A joins AAIF's open agentic stack" — https://aaif.io/blog/a2a-joins-aaif
+32. Vercel Blog — "Introducing Agent Plugins" (2026-08-06) — https://vercel.com/blog/introducing-agent-plugins
+33. AWS Open Source Blog — "AWS Supports Agent Plugins" (2026-08) — https://aws.amazon.com/blogs/opensource/aws-supports-agent-plugins-an-open-standard-for-portable-agent-extensions/
+34. GitHub Changelog — "Agent Plugins 1.0 in VS Code, Copilot CLI, and the Copilot app" (2026-08-12) — https://github.blog/changelog/2026-08-12-agent-plugins-1-0-in-vs-code-copilot-cli-and-the-copilot-app/
+35. OpenAI Developers — "MCP Apps compatibility in ChatGPT" (Apps SDK) — https://developers.openai.com/apps-sdk/mcp-apps-in-chatgpt
+36. IETF Datatracker — agentproto BoF minutes, IETF 126 (2026-07-23, Vienna) — https://datatracker.ietf.org/meeting/126/materials/minutes-126-agentproto-202607230700-00
+37. IETF Datatracker — agentproto Proposed Charter 00-01 (updated 2026-09-15) — https://datatracker.ietf.org/doc/charter-ietf-agentproto/00-01/
+38. Atlassian — "The End of Single-Player AI" (Team '26 Europe founder update, 2026-10-06) — https://www.atlassian.com/blog/company-news/team26-europe-founder-update
+39. Atlassian — "AMP: the Agentic Multiplayer Protocol" (platform page) — https://www.atlassian.com/platform/agentic-multiplayer-protocol
+40. Diginomica — "Atlassian's Agentic Multiplayer Protocol sets the scene" (2026-10-07) — https://diginomica.com/team-26-europe-atlassian-agentic-multiplayer-protocol-agents-join-team
+41. Techzine — "Atlassian AMP: how can enterprises run and govern agentic AI teams?" (2026-10-07) — https://www.techzine.eu/blogs/devops/144826/atlassian-amp-how-can-enterprises-run-and-govern-agentic-ai-teams/ (bot-blocked 403; corroborated by [42])
+42. SiliconANGLE — "Atlassian lays groundwork for humans and AI agents to work side by side" (2026-10-07) — https://siliconangle.com/2026/10/07/atlassian-lays-the-groundwork-for-humans-and-ai-agents-to-work-side-by-side/
+43. modelcontextprotocol/typescript-sdk — ROADMAP.md — https://github.com/modelcontextprotocol/typescript-sdk/blob/main/ROADMAP.md
+44. MCP Blog — "SDK betas for the 2026-07-28 specification" — https://blog.modelcontextprotocol.io/posts/sdk-betas-2026-07-28/
+45. OpenAI — "DevDay 2026 Recap" — https://openai.com/index/devday-2026-recap/ (403 on direct fetch; corroborated by [46–48])
+46. ChatGPT Learn — "DevDay 2026" (2026-09-29) — https://learn.chatgpt.com/docs/whats-new/devday-2026
+47. MCPJam — "OpenAI DevDay 2026: what matters for plugin builders" (2026-09-30) — https://www.mcpjam.com/blog/openai-devday-2026
+48. InfoQ — "OpenAI DevDay 2026 Recap for Developers" (Oct 2026) — https://www.infoq.com/news/2026/10/openai-devday-2026/
+49. WorkOS — "MCP Events in ChatGPT: Why an event subscription is a credential" (Oct 2026) — https://workos.com/blog/mcp-events-chatgpt-subscription-revocation
+50. IETF Datatracker — CATALIST group (BOF Concluded, not chartered) — https://datatracker.ietf.org/group/catalist/about/
+51. Arcade.dev — "Smithery Is Now Part of Arcade.dev" (2026-08-05) — https://www.arcade.dev/blog/smithery-joins-arcade/
+52. Devin/Windsurf Docs — "Cascade MCP Integration" — https://docs.devin.ai/windsurf/plugins/cascade/mcp
+53. MCP Blog — "MCP joins the Agentic AI Foundation" (2025-12-09) — https://blog.modelcontextprotocol.io/posts/2025-12-09-mcp-joins-agentic-ai-foundation/
+54. MCP Blog — "MCP Apps — Bringing UI Capabilities To MCP Clients" (2026-01-26) — https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/
+55. SEP-1865 MCP Apps spec (ext-apps repo, 2026-01-26 Stable) — https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx
+56. A2A — "A2A Protocol Ships v1.0" (2026-03-12) — https://a2a-protocol.org/latest/blog/2026/03/12/a2a-protocol-ships-v10-production-ready-standard-for-agent-to-agent-communication/
+57. MCP docs — SEPs index (SEP-2663 Final 2026-04-27; SEP-2640 Final 2026-04-23; SEP-2243, SEP-2575, SEP-2596 Final) — https://modelcontextprotocol.io/seps
+58. MCP Blog — "Enterprise-Managed Authorization: Zero-touch OAuth for MCP" (2026-06-18) — https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/
+59. GitHub Changelog — "GitHub MCP Registry: the fastest way to discover AI tools" (2025-09-16) — https://github.blog/changelog/2025-09-16-github-mcp-registry-the-fastest-way-to-discover-ai-tools/
+60. MCP Specification — Key Changes, 2025-11-25 — https://modelcontextprotocol.io/specification/2025-11-25/changelog
+61. GitHub Changelog — "GitHub MCP Server supports the next MCP specification" (2026-07-23) — https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/
+62. MCP docs — Governance and Stewardship — https://modelcontextprotocol.io/community/governance
+63. MCP Specification — landing, 2026-07-28 — https://modelcontextprotocol.io/specification/2026-07-28
+64. MCP docs — Security Best Practices (2026-07-28 docs tree) — https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices
+65. MCP Blog — "The New MCP Roadmap" (2026-08-22) — https://blog.modelcontextprotocol.io/posts/mcp-roadmap/
+66. MCP docs — Roadmap (five priority areas) — https://modelcontextprotocol.io/development/roadmap
+67. MCP Specification — Transports, 2026-07-28 — https://modelcontextprotocol.io/specification/2026-07-28/basic/transports
+68. Claude Code Docs — "Connect Claude Code to tools via MCP" — https://code.claude.com/docs/en/mcp
+69. Microsoft Learn — "Using MCP Tools" (Agent Framework) — https://learn.microsoft.com/en-us/agent-framework/agents/tools/local-mcp-tools
+70. LangChain Docs — "Model Context Protocol (MCP)" / MCPAdapter — https://docs.langchain.com/oss/python/langchain/mcp
+71. library.mikesailab.com — MCP Protocol News roundup (2026-09-25; secondary) — https://library.mikesailab.com/news/ai-news/mcp-news/september-2026/2026-09-25/
+72. BestHub — "MCP Protocol Gets Skills" (SEP-2640; secondary) — https://www.besthub.dev/articles/mcp-protocol-gets-skills-standardized-agent-workflows-now-built-in-1e52d682b57f
+73. MCP docs — SEP-2127: MCP Server Cards — https://modelcontextprotocol.io/seps/2127-mcp-server-cards
+74. Claude Help Center — "Getting started with local MCP servers on Claude Desktop" — https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop
+75. Claude Docs — "Claude Desktop on 3P: MCP, plugins, skills, and hooks" — https://claude.com/docs/third-party/claude-desktop/extensions
+76. Claude Docs — "Connect to external tools with MCP" (Agent SDK) — https://code.claude.com/docs/en/agent-sdk/mcp
+77. OpenAI Help Center — "Developer mode and MCP apps in ChatGPT" — https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt (bot-blocked on direct fetch; text verified via search extraction)
+78. OpenAI Developers — "Agents API: MCP connections" — https://developers.openai.com/api/docs/guides/agents-api/tools/mcp
+79. Microsoft 365 Developer Blog — "MCP Apps now available in Copilot chat" (2026-04-07) — https://devblogs.microsoft.com/microsoft365dev/mcp-apps-now-available-in-copilot-chat/
+80. Microsoft 365 Message Center archive — MC1227627 (MCP widgets WW rollout, 2026-02/03) — https://mc.merill.net/message/MC1227627
+81. Microsoft Learn — "Microsoft MCP management MCP server reference" (preview) — https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-management
+82. Microsoft 365 Message Center archive — RM564607 (Gov-cloud MCP agents GA June CY2026) — https://mc.merill.net/message/RM564607
+83. GitHub Changelog — "MCP support in VS Code is generally available" (2025-07-14) — https://github.blog/changelog/2025-07-14-model-context-protocol-mcp-support-in-vs-code-is-generally-available/
+84. microsoft/vscode — Copilot extension CHANGELOG — https://github.com/microsoft/vscode/blob/main/extensions/copilot/CHANGELOG.md
+85. GitHub Docs — "Extending GitHub Copilot Chat with MCP servers" — https://docs.github.com/en/copilot/customizing-copilot/using-model-context-protocol/extending-copilot-chat-with-mcp
+86. JetBrains — "MCP | AI Assistant Documentation" (2026.2) — https://www.jetbrains.com/help/ai-assistant/mcp.html
+87. Cursor Docs — "Model Context Protocol (MCP)" — https://cursor.com/docs/mcp
+88. Cursor Docs — "Cloud Agent MCP capabilities" — https://cursor.com/docs/cloud-agent/capabilities
+89. Cursor Help — "MCP integrations" — https://cursor.com/help/customization/mcp
+90. Zed Docs — "Model Context Protocol" — https://zed.dev/docs/ai/mcp
+91. Zed Docs — "MCP Server Extensions" (deprecation note) — https://zed.dev/docs/extensions/mcp-extensions
+92. Microsoft Learn — "MCP on Windows overview" — https://learn.microsoft.com/en-us/windows/ai/mcp/overview
+93. Microsoft Learn — "Manually register remote and local MCP servers (ODR)" — https://learn.microsoft.com/en-us/windows/ai/mcp/servers/mcp-manual
+94. Microsoft Learn — "Securely containing MCP servers on Windows" — https://learn.microsoft.com/en-us/windows/ai/mcp/servers/mcp-containment
+95. Claude Docs — "Build an MCP server for Claude" (connectors) — https://claude.com/docs/connectors/building
+96. OpenAI Agents SDK (Python) — "Model context protocol (MCP)" — https://openai.github.io/openai-agents-python/mcp/
+97. Microsoft Learn — "Semantic Kernel: adding MCP plugins" (carried from edition 1) — https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/adding-mcp-plugins
+98. Google ADK Docs — "Model Context Protocol tools" — https://adk.dev/tools-custom/mcp-tools/
+99. MCP Blog — "Introducing the MCP Registry" (2025-09-08) — https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/
+100. MCP docs — The MCP Registry (About; preview banner) — https://modelcontextprotocol.io/registry/about
+101. MCP Blog index (post ordering; no registry GA announcement) — https://blog.modelcontextprotocol.io/
+102. modelcontextprotocol/registry — README (preview 2025-09-08; API freeze 2025-10-24; "GA release will follow later") — https://github.com/modelcontextprotocol/registry
+103. modelcontextprotocol/registry — Releases (v1.8.0/v1.8.1, Aug 2026) — https://github.com/modelcontextprotocol/registry/releases
+104. MCP docs — Registry authentication — https://modelcontextprotocol.io/registry/authentication
+105. Official Registry server.json requirements — https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/official-registry-requirements.md
+106. MCP docs — Registry FAQ — https://modelcontextprotocol.io/registry/faq
+107. mcpstepbystep — "MCP Registry Guide: Where to Find MCP Servers (2026)" — https://mcpstepbystep.com/learn/finding-servers/
+108. JFrog blog — "The JFrog MCP Registry is GA" (2026-03-18) — https://jfrog.com/blog/announcing-general-availability-of-the-jfrog-mcp-registry/
+109. AWS — "AWS Agent Registry … now generally available" (2026-08-31) — https://aws.amazon.com/about-aws/whats-new/2026/08/aws-agent-registry-generally-available/
+110. Workato — "MCP Registry — Now Generally Available" (Aug 2026) — https://www.workato.com/product-hub/changelog/mcp-registry-now-generally-available/
+111. Docker Docs — "Docker MCP Catalog and Toolkit" — https://docs.docker.com/ai/mcp-catalog-and-toolkit/
+112. Docker Blog — "Custom MCP Catalogs and Profiles" (GA, 2026-05-15) — https://www.docker.com/blog/create-custom-mcp-catalogs-and-profiles/
+113. Docker Blog — "Docker MCP Catalog: a secure way to discover and run MCP servers" (trust tiers) — https://www.docker.com/blog/docker-mcp-catalog-secure-way-to-discover-and-run-mcp-servers/
+114. gaintage — "How Many MCP Servers Are There? (Oct 2026 Count)" — https://gaintage.com/blog/mcp-server-statistics
+115. popmcp — "MCP Server Directory Comparison: 7 Places to Look (2026)" — https://www.popmcp.com/blog/mcp-server-directory-comparison/
+116. Smithery — servers page ("14,161 servers found", own fetch 2026-10-09) — https://smithery.ai/servers
+117. Forbes — "Arcade Acquires Smithery To Own The Agent Tool Supply Chain" (2026-08-10) — https://www.forbes.com/sites/janakirammsv/2026/08/10/arcade-acquires-smithery-to-own-the-agent-tool-supply-chain/
+118. github/github-mcp-server — Releases (v1.12.0, Sept 2026) — https://github.com/github/github-mcp-server/releases
+119. Stripe Docs — "Model Context Protocol (MCP)" — https://docs.stripe.com/mcp
+120. Shopify Docs — "Storefront MCP server" (incl. UCP catalog endpoint) — https://shopify.dev/docs/apps/build/storefront-mcp/servers/storefront
+121. Microsoft Learn — "Get started with Learn MCP Server in Copilot Studio" — https://learn.microsoft.com/en-us/training/support/mcp-get-started-copilot-studio
+122. AWS — Amazon Bedrock AgentCore pricing — https://aws.amazon.com/bedrock/agentcore/pricing/
+123. GitHub Blog — "How to find, install, and manage MCP servers with the GitHub MCP Registry" (44 servers, 2025-10-24) — https://github.blog/ai-and-ml/generative-ai/how-to-find-install-and-manage-mcp-servers-with-the-github-mcp-registry/
+124. MCP docs — SDKs (ten SDKs and tiers, fetched 2026-10-09) — https://modelcontextprotocol.io/docs/2026-07-28/sdk
+125. MCP Blog — "The Official Ruby SDK for MCP Reaches 1.0" (2026-07-27) — https://blog.modelcontextprotocol.io/posts/ruby-sdk-1-0/
+126. Ruby SDK Tier 2 Assessment (GitHub issue #3127) — https://github.com/modelcontextprotocol/modelcontextprotocol/issues/3127
+127. NVD — CVE-2026-59822 (LiteLLM) — https://nvd.nist.gov/vuln/detail/CVE-2026-59822 (JavaScript-rendered on direct fetch; corroborated by [26, 29])
+128. NVD — CVE-2026-77244 (mcp-atlassian) — https://nvd.nist.gov/vuln/detail/CVE-2026-77244 (JavaScript-rendered on direct fetch; corroborated by [27])
+129. GHSA-wrhw-j3f9-8vc6 — mcp-atlassian security advisory — https://github.com/sooperset/mcp-atlassian/security/advisories/GHSA-wrhw-j3f9-8vc6
+130. TNW — "Google, JPMorgan and two governments fixed the same MCP flaw" (Oct 2026) — https://thenextweb.com/news/mcp-flaw-ssrf-google-jpmorgan-dinum-protocol-pivoting
+131. Data Phoenix — "Four public records show recurring MCP SSRF fixes — and a fifth claim" (2026-10-05) — https://dataphoenix.info/news/mcp-ssrf-fixes-four-public-records-fifth-claim
+132. OX Security — "MCP STDIO Command Injection: Full Vulnerability Advisory" (2026-04-15; 30-page paper is PDF-only, parsing blocked) — https://www.ox.security/blog/mcp-supply-chain-advisory-rce-vulnerabilities-across-the-ai-ecosystem/
+133. The Register — "Anthropic won't own MCP 'design flaw' putting 200K servers at risk" (2026-04-16) — https://www.theregister.com/security/2026/04/16/mcp-design-flaw-puts-200k-servers-at-risk-researcher/5222022
+134. MCP docs — Local Server Security (2026-07-28 docs tree) — https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/local-server-security
+135. Anthropic — Connector verification (Community vs Verified) — https://claude.com/docs/connectors/verification
+136. Anthropic — Connector pre-submission checklist — https://claude.com/docs/connectors/pre-submission-checklist
+137. Microsoft Security Blog — "The state of MCP security in 2026" — https://techcommunity.microsoft.com/blog/microsoft-security-blog/the-state-of-mcp-security-in-2026/4531327 (JavaScript-rendered on direct fetch; recorded by research pass T3)
+138. Microsoft — "OWASP MCP Top 10" Azure implementation guide (MCP01–MCP10) — https://microsoft.github.io/mcp-azure-security-guide/
+139. Microsoft Learn — Entra Global Secure Access: MCP firewall — https://learn.microsoft.com/en-us/entra/global-secure-access/how-to-configure-mcp-firewall
+140. OpenAI Developers — "MCP server" (Apps SDK concepts) — https://developers.openai.com/apps-sdk/concepts/mcp-server
+141. OWASP — MCP Security Cheat Sheet — https://cheatsheetseries.owasp.org/cheatsheets/MCP_Security_Cheat_Sheet.html
+142. NSA Cybersecurity Information Sheet — MCP security (June 2026; PDF-only, parsing blocked) — https://media.defense.gov/2026/Jun/02/2003943289/-1/-1/0/CSI_MCP_SECURITY.PDF
+143. Stacklok — "State of MCP in Software 2026" (PDF, parsed during review; 41% production All-respondents, 45% Software-respondents) — https://stacklok.com/wp-content/uploads/2026/01/State-of-MCP-in-Software-2026_FINAL.pdf
+144. Digital Applied — "MCP adoption statistics" (publisher of the retracted 78% figure) — https://www.digitalapplied.com/blog/mcp-adoption-statistics-2026-model-context-protocol
+145. Bloomberg — "What We Learned Building Enterprise MCP at Bloomberg" (2026-07-21) — https://www.bloomberg.com/company/stories/what-we-learned-building-enterprise-mcp-at-bloomberg/ (403 on direct fetch; corroborated by [146])
+146. Glama — "Scaling enterprise GenAI with MCP: Bloomberg case study" (9,500+ engineers; secondary) — https://glama.ai/blog/2025-07-19-scaling-enterprise-gen-ai-with-mcp-bloomberg-case-study
+147. Uber — "Solving the agent identity crisis" — https://www.uber.com/us/en/blog/solving-the-agent-identity-crisis/
+148. AWS Blog — "How Smartsheet built a remote MCP server on AWS" — https://aws.amazon.com/blogs/machine-learning/how-smartsheet-built-a-remote-mcp-server-on-aws/
+149. Anthropic — Chronograph customer story — https://claude.com/customers/chronograph
+150. Propel Software — "First to launch production MCP for PLM" (2026-06-25) — https://www.propelsoftware.com/news/first-to-launch-production-mcp-for-plm
+151. bex.co — "MCP state-of-play" (source of the untraceable "28% of Fortune 500" figure; secondary) — https://bex.co/blog/2026/09/24/mcp-transition-technology-infrastructure-first-deploy-api
+152. ACM — "Model Context Protocol (MCP): Landscape, Security Threats…" (Sept 2025 survey) — https://dl.acm.org/doi/10.1145/3796519
+153. GitHub Discussion #3407 — "MCP Core Maintainer Meeting - September 30, 2026" (SEP-3398, SEP-3392, triggers-and-events SEP task) — https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/3407
+154. Linux Foundation press — "A2A Protocol Surpasses 150 Organizations…" (2026-04-09) — https://www.linuxfoundation.org/press/a2a-protocol-surpasses-150-organizations-lands-in-major-cloud-platforms-and-sees-enterprise-production-use-in-first-year
+155. modelcontextprotocol/experimental-ext-triggers-events — WG incubation repo (no accepted SEP) — https://github.com/modelcontextprotocol/experimental-ext-triggers-events
+156. VS Code docs — "Agent plugins in VS Code" — https://code.visualstudio.com/docs/agent-customization/agent-plugins
+157. agentgateway/agentgateway — repository (Linux Foundation project) — https://github.com/agentgateway/agentgateway
+158. microsoft/mcp-gateway — repository (stateless rewrite; requires `2026-07-28` clients; no transport-session storage) — https://github.com/microsoft/mcp-gateway
+159. stacklok/toolhive — repository — https://github.com/stacklok/toolhive
+160. jacar.es — "MCP specification 2026-07-28 and what it breaks" (2026-09-07; secondary; deprecated-features registry reading) — https://jacar.es/en/mcp-specification-2026-07-28/
+161. jacar.es — "Consolidated MCP ecosystem: a quick map for 2026" — https://jacar.es/en/consolidated-mcp-ecosystem-a-quick-map-for-2026/
+162. MCP Specification — Subscriptions, 2026-07-28 — https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/subscriptions
+163. SEP-1288: WebSocket Transport (GitHub issue #1288; closed dormant 2026-06-26) — https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1288
+164. lasso-security/mcp-gateway — repository (last commit 2026-01-22) — https://github.com/lasso-security/mcp-gateway
+165. Microsoft Learn — "Connect agents to MCP server endpoints" (Foundry) — https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/model-context-protocol
+166. Forkast — "The Open-Source Enterprise Agent Offensive" (secondary; source of the "fourteen-plus vendors" state-management count and Atlassian MCP usage figures) — https://forkast.news/the-open-source-enterprise-agent-offensive-how-open-models-protocols-and-governance-are-winning-the-standards-war/
+167. MCP docs — Extensions Overview — https://modelcontextprotocol.io/extensions/overview
+168. CISA — Known Exploited Vulnerabilities catalog (feed version 2026.10.08; KEV rows for CVE-2026-42271 added 2026-06-08, CVE-2026-59822 and CVE-2026-48710 added 2026-09-02) — https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+169. Jan Wildeboer (jwatte.com) — MCP registry census (24,240 distinct servers, 2026-08-22; baseline for the growth delta in §2) — https://jwatte.com/blog/mcp-servers-for-small-business/
