@@ -17,10 +17,10 @@ const EDITIONS = [
     lead:
       "Twenty-three months in, the protocol layer has settled — and everything interesting moved up the stack. The stateless 2026-07-28 spec holds on a firm six-month cadence; the registry crossed 41,000 servers while still labeled preview; one foundation now hosts the whole agentic stack; and security finally got measured the way production software gets measured.",
     summary: [
-      "MCP is the default answer at the agent-to-tools boundary. The 2026-07-28 stateless specification remains the latest revision, with the next release locked for December 15, 2026.",
-      "The official MCP Registry — still carrying its preview banner — holds 41,183 latest-version servers per this edition's own census (40,676 active / 507 deprecated), roughly 20× growth in ten months, with September 2026 the largest month ever.",
-      "The Agentic AI Foundation under the Linux Foundation hosts six projects — MCP, goose, AGENTS.md, agentgateway, A2A, and Agent Router — and launched the MCPA certification. Rust and Ruby SDKs were promoted to Tier 1 (ten official SDKs in all), with Tier-1 downloads near half a billion a month.",
-      "Consumer Google opened up (Spark custom MCP apps, Workspace connectors, Gemini Enterprise GA), OpenAI shipped MCP Events support ahead of ratification, and Atlassian's AMP layers governance on top of MCP + A2A. The IETF moved toward chartering agent-protocol work (agentproto).",
+      ["specification", "MCP is the default answer at the agent-to-tools boundary. The 2026-07-28 stateless specification remains the latest revision, with the next release locked for December 15, 2026."],
+      ["registry", "The official MCP Registry — still carrying its preview banner — holds 41,183 latest-version servers per this edition's own census (40,676 active / 507 deprecated), roughly 20× growth in ten months, with September 2026 the largest month ever."],
+      ["foundations & SDKs", "The Agentic AI Foundation under the Linux Foundation hosts six projects — MCP, goose, AGENTS.md, agentgateway, A2A, and Agent Router — and launched the MCPA certification. Rust and Ruby SDKs were promoted to Tier 1 (ten official SDKs in all), with Tier-1 downloads near half a billion a month."],
+      ["adoption", "Consumer Google opened up (Spark custom MCP apps, Workspace connectors, Gemini Enterprise GA), OpenAI shipped MCP Events support ahead of ratification, and Atlassian's AMP layers governance on top of MCP + A2A. The IETF moved toward chartering agent-protocol work (agentproto)."],
     ],
     highlights: [
       ["41,183-server registry", "own census of the official API (412 pages), independently replicated during review at 41,211 — same-day drift; still no GA"],
@@ -47,9 +47,9 @@ const EDITIONS = [
     lead:
       "The first assessment: MCP after its first twenty-one months, from promising standard to load-bearing infrastructure — the backward-incompatible stateless rewrite, the handover to the Linux Foundation, and the full map of who actually supports it.",
     summary: [
-      "A source-verified white paper covering the 2026-07-28 stateless rewrite (no initialization handshake, no session IDs) and the donation of MCP to the Agentic AI Foundation.",
-      "It maps the complete support matrix across desktop apps, IDEs, the OS layer, web apps, APIs, and headless SDKs, and reports ecosystem numbers that disagree by methodology side by side, never averaged.",
-      "The security posture it finds depends on implementation discipline more than on the spec.",
+      ["the rewrite", "A source-verified white paper covering the 2026-07-28 stateless rewrite (no initialization handshake, no session IDs) and the donation of MCP to the Agentic AI Foundation."],
+      ["support matrix", "It maps native support across desktop apps, IDEs, the OS layer, web apps, APIs, and headless SDKs, and reports ecosystem numbers that disagree by methodology side by side, never averaged."],
+      ["security", "The security posture it finds depends on implementation discipline more than on the spec."],
     ],
     highlights: [
       ["Stateless core", "the 2026-07-28 rewrite removes sessions and the handshake; MRTR and subscriptions/listen replace server-initiated requests"],
@@ -147,7 +147,13 @@ function renderReport() {
   ].join("");
   el("rep-lead").textContent = e.lead;
   el("rep-summary").innerHTML = e.summary
-    .map((p, i) => `<p${i ? ' class="mt-4"' : ""}>${esc(p)}</p>`)
+    .map(
+      ([label, text], i) => `
+      <div${i ? ' class="mt-6"' : ""}>
+        <code class="!bg-transparent !border-0 !p-0 block text-[13px] text-[var(--brand)]">${esc(label)}</code>
+        <p class="mt-1">${esc(text)}</p>
+      </div>`
+    )
     .join("");
   el("rep-highlights").innerHTML = e.highlights
     .map(
