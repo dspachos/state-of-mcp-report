@@ -15,7 +15,7 @@ Pipeline per edition: parallel research passes → synthesis → citation verifi
 | Edition | As-of date | Scope | PDF |
 |---|---|---|---|
 | **2.0** | 2026-10-09 | 27 pp · 169 cited sources | [main](https://github.com/dspachos/state-of-mcp-report/blob/main/state-of-mcp-whitepaper.pdf) |
-| 1.1 | 2026-08-25 | 25 pp · 123 cited sources | [tag `v1.1`](https://github.com/dspachos/state-of-mcp-report/blob/v1.1/state-of-mcp-whitepaper.pdf) |
+| 1.1 | 2026-08-25 | 25 pp · 123 cited sources | [editions/](https://github.com/dspachos/state-of-mcp-report/blob/main/editions/state-of-mcp-whitepaper-v1.1-2026-08-25.pdf) |
 
 ## Edition 2 in one paragraph
 
